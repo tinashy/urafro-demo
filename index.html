@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0D9488">
+  <title>urAfro — Run your shop from your phone</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Desktop-only phone-frame chrome. Hidden on mobile via CSS. -->
+  <div class="desktop-frame" id="desktopFrame">
+    <aside class="desktop-meta">
+      <div class="desktop-meta-brand">urAfro</div>
+      <div class="desktop-meta-kicker">Sprint 0 demo · v0.1</div>
+      <div class="desktop-meta-screen" id="desktopMetaScreen">Loading…</div>
+      <div class="desktop-meta-hint">Use the preview on the right. Resize or open on a phone for the real experience.</div>
+      <nav class="desktop-meta-quicknav">
+        <div class="desktop-meta-quicknav-label">Quick jump</div>
+        <a href="#/auth">Phone signup</a>
+        <a href="#/onboarding/1">Onboarding</a>
+        <a href="#/inbox">Order inbox</a>
+        <a href="#/inventory">Inventory</a>
+        <a href="#/store">Storefront</a>
+        <a href="#/coming">What's coming</a>
+      </nav>
+    </aside>
+
+    <div class="phone">
+      <div class="phone-bezel">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <!-- Fake iOS status bar (desktop only) -->
+          <div class="status-bar">
+            <span class="status-time">09:41</span>
+            <span class="status-icons">
+              <svg width="16" height="10" viewBox="0 0 16 10" fill="currentColor" aria-hidden="true"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M1 4 Q7 -2 13 4"/><path d="M3 6 Q7 2 11 6"/><circle cx="7" cy="8.5" r="0.9" fill="currentColor" stroke="none"/></svg>
+              <svg width="22" height="10" viewBox="0 0 22 10" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="0.5" y="0.5" width="18" height="9" rx="2"/><rect x="2" y="2" width="15" height="6" rx="1" fill="currentColor"/><rect x="19.5" y="3.5" width="1.5" height="3" rx="0.5" fill="currentColor"/></svg>
+            </span>
+          </div>
+
+          <!-- App surface — everything a screen renders goes here -->
+          <main id="app" class="app-surface" aria-live="polite"></main>
+
+          <!-- iOS home-indicator bar -->
+          <div class="home-indicator" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App bootstrap. Order matters — data first, then screens, then router. -->
+  <script src="data.js"></script>
+  <script src="screens/_shared.js"></script>
+  <script src="screens/auth.js"></script>
+  <script src="screens/onboarding.js"></script>
+  <script src="screens/placeholder.js"></script>
+  <script src="screens/inventory.js"></script>
+  <script src="screens/store.js"></script>
+  <script src="screens/storefront.js"></script>
+  <script src="screens/inbox.js"></script>
+  <script src="screens/order.js"></script>
+  <script src="screens/stock-how.js"></script>
+  <script src="screens/coming.js"></script>
+  <script src="screens/more.js"></script>
+  <script src="screens/receipts.js"></script>
+  <script src="screens/broadcasts.js"></script>
+  <script src="screens/dashboard.js"></script>
+  <script src="screens/low-stock.js"></script>
+  <script src="screens/customers.js"></script>
+  <script src="screens/expenses.js"></script>
+  <script src="screens/offline.js"></script>
+  <script src="screens/end-of-day.js"></script>
+  <script src="screens/vat.js"></script>
+  <script src="screens/currency.js"></script>
+  <script src="screens/barcode.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
