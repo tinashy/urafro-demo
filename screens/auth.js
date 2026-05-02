@@ -23,8 +23,8 @@ function renderPhone(state) {
   const draft = state.auth.phoneDraft;
   const valid = /^\d{9}$/.test(draft.replace(/\s/g, ''));
   return `
-    <section class="screen">
-      <div class="screen-body" style="padding-top:48px">
+    <section class="screen layout-stack">
+      <div class="screen-body app-container" style="padding-top:48px">
         <div class="hero">
           <div class="hero-brand">urAfro</div>
           <h1 class="hero-title">Run your shop from your phone.</h1>
@@ -97,7 +97,7 @@ function wirePhone(state) {
 function renderOtp(state) {
   const phone = state.auth.phone || '+263 77 234 5678';
   return `
-    <section class="screen">
+    <section class="screen layout-stack">
       <header class="screen-header">
         <button class="screen-header-back" onclick="navigate('/auth')" aria-label="Back">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -106,7 +106,7 @@ function renderOtp(state) {
         <span style="width:40px"></span>
       </header>
 
-      <div class="screen-body">
+      <div class="screen-body app-container">
         <div class="stack stack-md" style="margin-top:24px">
           <div>
             <p class="text-bold" style="margin:0 0 4px">Enter the 6-digit code</p>

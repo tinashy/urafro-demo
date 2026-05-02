@@ -190,12 +190,12 @@ window.Screens.inventory = {
       : { label: '+ Add',  onClick: "navigate('/product/new')" };
 
     return `
-      <section class="screen">
+      <section class="screen layout-stack">
         ${UI.header({ title: headerTitle, back: '/inbox', action: headerAction })}
 
         ${flashBanner()}
 
-        <div class="screen-body" style="padding-bottom:${selectMode && selectedSet.size > 0 ? 140 : 88}px">
+        <div class="screen-body app-container" style="padding-bottom:${selectMode && selectedSet.size > 0 ? 140 : 88}px">
 
           ${!selectMode ? `
             <!-- Top stats strip -->
@@ -382,10 +382,10 @@ window.Screens.product = {
     const headerTitle = isNew ? 'Add product' : 'Edit product';
 
     return `
-      <section class="screen">
+      <section class="screen layout-stack">
         ${UI.header({ title: headerTitle, back: '/inventory' })}
 
-        <div class="screen-body">
+        <div class="screen-body app-container">
           <div class="stack stack-md">
 
             <!-- Live preview -->

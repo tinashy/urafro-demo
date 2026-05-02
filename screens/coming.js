@@ -82,10 +82,10 @@ window.Screens.coming = {
     });
 
     return `
-      <section class="screen">
+      <section class="screen layout-stack">
         ${UI.header({ title: "What's coming", back: '/inbox' })}
 
-        <div class="screen-body" style="padding-bottom:88px">
+        <div class="screen-body app-container" style="padding-bottom:88px">
 
           <p class="text-sm text-muted" style="margin:0 0 4px">
             Tap a feature to see the screen — Now items are live in this demo, later items show a preview with their ETA.

@@ -45,7 +45,7 @@ window.Screens.inbox = {
     const orders = byStatus[tab] || [];
 
     return `
-      <section class="screen">
+      <section class="screen layout-stack">
         <header class="screen-header">
           <span style="width:40px"></span>
           <h1>Orders</h1>
@@ -54,7 +54,7 @@ window.Screens.inbox = {
 
         ${renderTabStrip(tab, counts)}
 
-        <div class="screen-body" style="padding-top:12px;padding-bottom:96px">
+        <div class="screen-body app-container" style="padding-top:12px;padding-bottom:96px">
           ${orders.length === 0
             ? UI.empty({
                 title: emptyTitleFor(tab),
