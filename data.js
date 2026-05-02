@@ -16,9 +16,9 @@ window.AppData = {
     storeName: 'Amara Fashion',
     storeSlug: 'amara-fashion',
     tagline: 'Handmade ankara & knitwear · Harare',
-    phone: '+263 77 234 5678',
+    phone: '+263 77 539 1219',
     phoneCountry: '+263',
-    phoneNumber: '77 234 5678',
+    phoneNumber: '77 539 1219',
     email: 'amara.fashion@gmail.com',
     currency: 'USD',
     location: 'Avondale, Harare',
@@ -41,7 +41,7 @@ window.AppData = {
       code: 'A-20426',
       status: 'new',            // new | confirmed | fulfilled | cancelled
       customerName: 'Tendai Moyo',
-      customerPhone: '+263 71 455 2190',
+      customerPhone: '+263 77 539 1219',
       items: [
         { productId: 'p_001', name: 'Ankara Wrap Dress — Sunset', qty: 1, price: 45 },
         { productId: 'p_004', name: 'Kitenge Headwrap',           qty: 1, price: 12 },
@@ -56,7 +56,7 @@ window.AppData = {
       code: 'A-20425',
       status: 'confirmed',
       customerName: 'Nyasha Chiwanza',
-      customerPhone: '+263 78 101 3344',
+      customerPhone: '+263 77 539 1219',
       items: [
         { productId: 'p_003', name: 'Knit Cardigan — Cream', qty: 2, price: 32 },
       ],
@@ -71,7 +71,7 @@ window.AppData = {
       code: 'A-20424',
       status: 'fulfilled',
       customerName: 'Farai Dube',
-      customerPhone: '+263 77 555 0098',
+      customerPhone: '+263 77 539 1219',
       items: [
         { productId: 'p_002', name: 'Ankara Wrap Dress — Ocean', qty: 1, price: 45 },
         { productId: 'p_006', name: 'Beaded Clutch — Bronze',    qty: 1, price: 28 },
@@ -87,7 +87,7 @@ window.AppData = {
       code: 'A-20423',
       status: 'cancelled',
       customerName: 'Rutendo Sithole',
-      customerPhone: '+263 71 200 7765',
+      customerPhone: '+263 77 539 1219',
       items: [
         { productId: 'p_005', name: 'Silk Maxi Skirt — Emerald', qty: 1, price: 38 },
       ],
@@ -101,10 +101,10 @@ window.AppData = {
   ],
 
   customers: [
-    { id: 'c_001', name: 'Tendai Moyo',      phone: '+263 71 455 2190', orderCount: 1, totalSpend: 57  },
-    { id: 'c_002', name: 'Nyasha Chiwanza',  phone: '+263 78 101 3344', orderCount: 3, totalSpend: 178 },
-    { id: 'c_003', name: 'Farai Dube',       phone: '+263 77 555 0098', orderCount: 5, totalSpend: 312 },
-    { id: 'c_004', name: 'Rutendo Sithole',  phone: '+263 71 200 7765', orderCount: 1, totalSpend: 0   },
+    { id: 'c_001', name: 'Tendai Moyo',      phone: '+263 77 539 1219', orderCount: 1, totalSpend: 57  },
+    { id: 'c_002', name: 'Nyasha Chiwanza',  phone: '+263 77 539 1219', orderCount: 3, totalSpend: 178 },
+    { id: 'c_003', name: 'Farai Dube',       phone: '+263 77 539 1219', orderCount: 5, totalSpend: 312 },
+    { id: 'c_004', name: 'Rutendo Sithole',  phone: '+263 77 539 1219', orderCount: 1, totalSpend: 0   },
   ],
 
   // Metrics used on Tier 2 static mockups (dashboard, end-of-day).
