@@ -1,3 +1,13 @@
+/* Tailwind-driven responsive foundations */
+:root { --fluid-h1: clamp(1.75rem, 3vw + 1rem, 2.5rem); --fluid-h2: clamp(1.375rem, 2vw + 1rem, 2rem); }
+h1 { font-size: var(--fluid-h1); line-height: 1.15; }
+h2 { font-size: var(--fluid-h2); line-height: 1.2; }
+.screen, .screen-body, .app-surface { width: 100%; max-width: 100%; overflow-x: hidden; }
+.grid-responsive { display:grid; grid-template-columns:repeat(1,minmax(0,1fr)); gap:1rem; }
+@media (min-width: 768px){ .grid-responsive{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (min-width: 1024px){ .grid-responsive{grid-template-columns:repeat(3,minmax(0,1fr));} .stack-responsive{display:flex;flex-direction:row;} }
+.stack-responsive{display:flex;flex-direction:column;gap:1rem;}
+
 /* =========================================================================
    urAfro demo — design system
    Clean, modern, mobile-first. No framework, no dependencies.
@@ -1455,3 +1465,28 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   line-height: 1.55;
 }
 .stock-how-list li { margin: 4px 0; }
+
+
+/* --- Tailwind-style layout standardization pass --- */
+.screen{display:flex;flex-direction:column;min-height:100%;width:100%;max-width:100%;overflow-x:hidden;}
+.screen-body{width:100%;max-width:72rem;margin-inline:auto;padding:1rem 1rem 5rem;display:flex;flex-direction:column;gap:1rem;}
+@media (min-width:640px){.screen-body{padding:1.25rem 1.5rem 5rem;}}
+@media (min-width:1024px){.screen-body{padding:1.5rem 2rem 5rem;}}
+
+/* mobile-first layout helpers */
+.layout-stack{display:flex;flex-direction:column;gap:1rem;}
+.layout-stack-lg-row{display:flex;flex-direction:column;gap:1rem;}
+@media (min-width:1024px){.layout-stack-lg-row{flex-direction:row;align-items:flex-start;}}
+.layout-grid{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:1rem;}
+@media (min-width:768px){.layout-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (min-width:1024px){.layout-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+
+/* primitive consistency */
+button.btn,.btn{width:100%;border-radius:0.75rem;padding:0.625rem 1rem;font-weight:600;}
+@media (min-width:640px){button.btn,.btn{width:auto;}}
+input[type="text"],input[type="tel"],input[type="number"],input[type="search"],textarea,select{
+ width:100%;padding:0.625rem 0.75rem;border:1px solid var(--c-line-strong);border-radius:0.75rem;background:#fff;
+}
+input:focus,textarea:focus,select:focus{outline:2px solid #14b8a6;outline-offset:1px;border-color:#14b8a6;}
+.card{padding:1rem;border:1px solid var(--c-line);border-radius:0.75rem;background:#fff;box-shadow:var(--shadow-sm);}
+img{width:100%;height:auto;max-width:100%;}

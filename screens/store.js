@@ -46,14 +46,14 @@ window.Screens.store = {
     const fullUrl        = UI.storefrontUrl(slug);
 
     return `
-      <section class="screen">
+      <section class="screen layout-stack">
         ${UI.header({
           title: 'Your storefront',
           back: '/inbox',
           action: { label: 'Settings', onClick: "UI.toast('More storefront settings land within 3 months')" },
         })}
 
-        <div class="screen-body" style="padding-bottom:88px">
+        <div class="screen-body app-container" style="padding-bottom:88px">
 
           <!-- Brand card: how customers see you at a glance -->
           <div class="card" style="padding:0;overflow:hidden;border:0;box-shadow:var(--shadow-md)">

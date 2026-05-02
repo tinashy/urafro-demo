@@ -174,10 +174,10 @@ function renderGrid(state, ctx) {
   };
 
   return `
-    <section class="screen storefront">
+    <section class="screen storefront layout-stack">
       ${storefrontHeader(ctx)}
 
-      <div class="screen-body" style="padding-bottom:${count > 0 ? 96 : 24}px">
+      <div class="screen-body app-container" style="padding-bottom:${count > 0 ? 96 : 24}px">
 
         <!-- Search — filters by product name or category -->
         <div class="field" style="margin:0">
@@ -232,9 +232,9 @@ function renderProductDetail(state, ctx, productId) {
 
   if (!product) {
     setTimeout(() => navigate(`/storefront/${ctx.slug}`), 0);
-    return `<section class="screen storefront">
+    return `<section class="screen storefront layout-stack">
       ${storefrontHeader(ctx, { compact: true, title: 'Product' })}
-      <div class="screen-body">${UI.empty({ title: 'Not found', sub: 'That product is no longer listed.', icon: '🔎' })}</div>
+      <div class="screen-body app-container">${UI.empty({ title: 'Not found', sub: 'That product is no longer listed.', icon: '🔎' })}</div>
     </section>`;
   }
 
@@ -267,10 +267,10 @@ function renderProductDetail(state, ctx, productId) {
       : `<span style="color:var(--c-success)">In stock</span>`;
 
   return `
-    <section class="screen storefront">
+    <section class="screen storefront layout-stack">
       ${storefrontHeader(ctx, { compact: true, title: product.name.length > 28 ? product.name.slice(0, 28) + '…' : product.name })}
 
-      <div class="screen-body" style="padding:0 0 168px;gap:0">
+      <div class="screen-body app-container" style="padding:0 0 168px;gap:0">
 
         <!-- Hero image -->
         <div style="background:${product.color};aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden">
@@ -340,9 +340,9 @@ function renderCart(state, ctx) {
 
   if (lines.length === 0) {
     return `
-      <section class="screen storefront">
+      <section class="screen storefront layout-stack">
         ${storefrontHeader(ctx, { compact: true, title: 'Your cart' })}
-        <div class="screen-body">
+        <div class="screen-body app-container">
           ${UI.empty({ title: 'Your cart is empty', sub: 'Tap items in the storefront to add them here.', icon: '🛒' })}
           <button class="btn btn-primary btn-block" onclick="navigate('/storefront/${ctx.slug}')">Back to ${ctx.storeName}</button>
         </div>
@@ -380,10 +380,10 @@ function renderCart(state, ctx) {
   };
 
   return `
-    <section class="screen storefront">
+    <section class="screen storefront layout-stack">
       ${storefrontHeader(ctx, { compact: true, title: 'Your cart' })}
 
-      <div class="screen-body" style="padding-bottom:120px">
+      <div class="screen-body app-container" style="padding-bottom:120px">
         <div class="card" style="padding:8px">
           ${lines.map(line).join('<div class="divider" style="margin:0"></div>')}
         </div>
@@ -423,16 +423,16 @@ function renderCheckout(state, ctx) {
   if (lines.length === 0) {
     // Guard: navigated here with empty cart — bounce to grid
     setTimeout(() => navigate(`/storefront/${ctx.slug}`), 0);
-    return `<section class="screen storefront">${storefrontHeader(ctx, { compact: true, title: 'Checkout' })}<div class="screen-body"></div></section>`;
+    return `<section class="screen storefront layout-stack">${storefrontHeader(ctx, { compact: true, title: 'Checkout' })}<div class="screen-body app-container"></div></section>`;
   }
   const subtotal = cartSubtotal(state);
   const c = state.storefront.customer;
 
   return `
-    <section class="screen storefront">
+    <section class="screen storefront layout-stack">
       ${storefrontHeader(ctx, { compact: true, title: 'Checkout' })}
 
-      <div class="screen-body" style="padding-bottom:120px">
+      <div class="screen-body app-container" style="padding-bottom:120px">
         <!-- Order summary -->
         <div class="card" style="padding:14px 16px">
           <p class="section-label-title" style="margin:0 0 8px">Order summary</p>
@@ -521,10 +521,10 @@ function renderDone(state, ctx) {
   const code = state.storefront.lastOrderCode || 'A-00000';
 
   return `
-    <section class="screen storefront">
+    <section class="screen storefront layout-stack">
       ${storefrontHeader(ctx, { compact: true, title: 'Order placed' })}
 
-      <div class="screen-body" style="text-align:center;padding-top:32px">
+      <div class="screen-body app-container" style="text-align:center;padding-top:32px">
         <div class="stack stack-md" style="align-items:center">
           <div style="width:88px;height:88px;border-radius:24px;background:var(--c-success-bg);color:var(--c-success);display:flex;align-items:center;justify-content:center;margin-bottom:8px">
             <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
