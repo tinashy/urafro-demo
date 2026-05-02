@@ -137,6 +137,25 @@ window.UI = {
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
   },
 
+  /** Build the live storefront URL for a slug — uses the current deploy
+   *  origin so the same code works on file://, localhost, and the deployed
+   *  pages.dev / urafro.shop hostname. The path uses the hash router that
+   *  app.js parses, so /#/storefront/<slug> lands a customer on the grid. */
+  storefrontUrl(slug) {
+    const origin = (typeof window !== 'undefined' && window.location && window.location.origin) || '';
+    // Strip trailing index.html (file:// URLs include it) so the result is clean.
+    const base = origin.replace(/\/index\.html$/, '');
+    return `${base}/#/storefront/${slug}`;
+  },
+
+  /** Short, merchant-pretty version of the URL for display in copy/share UI.
+   *  Keeps the host + slug, drops the protocol + any "/#/storefront/" plumbing
+   *  so the merchant sees something that looks like a real storefront link. */
+  storefrontDisplay(slug) {
+    const url = UI.storefrontUrl(slug);
+    return url.replace(/^https?:\/\//, '').replace('/#/storefront/', '/');
+  },
+
   /** Open a direct WhatsApp chat to a specific phone number with a pre-filled message.
    *  `phone` accepts E.164 with or without leading "+"; non-digits are stripped for wa.me. */
   openWhatsApp(phone, message) {

@@ -15,27 +15,29 @@ window.Screens.customers = {
     const initials = (name) =>
       name.split(/\s+/).slice(0, 2).map(s => s[0]).join('').toUpperCase();
 
-    const customerRow = (c) => `
-      <div class="list-item"
-           onclick="UI.toast('Customer detail arrives within 6 months')"
-           role="button" tabindex="0">
-        <div class="list-item-icon" style="background:var(--c-primary-soft);color:var(--c-primary-dark);font-weight:700">
-          ${initials(c.name)}
+    const customerRow = (c) => {
+      // Pill colour carries the "repeat customer" signal; the label is just the order count.
+      const isRepeat = c.orderCount >= 2;
+      const pillCls = isRepeat ? 'pill-success' : 'pill-neutral';
+      const pillLabel = `${c.orderCount} ${c.orderCount === 1 ? 'order' : 'orders'}`;
+      return `
+        <div class="list-item"
+             onclick="UI.toast('Customer detail arrives within 6 months')"
+             role="button" tabindex="0">
+          <div class="list-item-icon" style="background:var(--c-primary-soft);color:var(--c-primary-dark);font-weight:700">
+            ${initials(c.name)}
+          </div>
+          <div class="list-item-body">
+            <p class="list-item-title">${c.name}</p>
+            <p class="list-item-sub" style="font-family:var(--font-mono)">${c.phone}</p>
+          </div>
+          <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <p class="text-bold" style="margin:0;font-size:14px;font-family:var(--font-mono);color:var(--c-primary-dark)">${AppData.helpers.money(c.totalSpend)}</p>
+            <span class="pill ${pillCls}" style="font-size:10px;white-space:nowrap">${pillLabel}</span>
+          </div>
         </div>
-        <div class="list-item-body">
-          <p class="list-item-title">${c.name}</p>
-          <p class="list-item-sub">
-            <span style="font-family:var(--font-mono)">${c.phone}</span>
-            <span class="text-subtle" style="margin:0 6px">·</span>
-            ${c.orderCount} ${c.orderCount === 1 ? 'order' : 'orders'}
-          </p>
-        </div>
-        <div style="text-align:right">
-          <p class="text-bold" style="margin:0;font-size:14px;font-family:var(--font-mono);color:var(--c-primary-dark)">${AppData.helpers.money(c.totalSpend)}</p>
-          ${c.orderCount >= 2 ? '<span class="pill pill-success" style="font-size:10px">Repeat</span>' : ''}
-        </div>
-      </div>
-    `;
+      `;
+    };
 
     return `
       <section class="screen">
@@ -52,18 +54,19 @@ window.Screens.customers = {
             Every order creates or updates a customer record automatically — name, phone, total spend, repeat-rate. No manual entry.
           </p>
 
-          <!-- Stats strip -->
-          <div class="row row-sm" style="gap:8px">
+          <!-- Stats strip — labels kept to a single short word so all three
+               tiles match height on narrow viewports. -->
+          <div class="row row-sm" style="gap:8px;align-items:stretch">
             <div class="card" style="flex:1;padding:12px 14px">
-              <p class="text-xs text-muted" style="margin:0">Customers</p>
+              <p class="text-xs text-muted" style="margin:0;white-space:nowrap">Customers</p>
               <p class="text-bold" style="margin:2px 0 0;font-size:18px">${totalCustomers}</p>
             </div>
             <div class="card" style="flex:1;padding:12px 14px">
-              <p class="text-xs text-muted" style="margin:0">Repeat buyers</p>
+              <p class="text-xs text-muted" style="margin:0;white-space:nowrap">Repeat</p>
               <p class="text-bold" style="margin:2px 0 0;font-size:18px">${repeatBuyers}</p>
             </div>
             <div class="card" style="flex:1.3;padding:12px 14px">
-              <p class="text-xs text-muted" style="margin:0">Lifetime spend</p>
+              <p class="text-xs text-muted" style="margin:0;white-space:nowrap">Lifetime spend</p>
               <p class="text-bold" style="margin:2px 0 0;font-size:18px">${AppData.helpers.money(totalSpend)}</p>
             </div>
           </div>

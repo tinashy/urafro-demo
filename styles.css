@@ -68,7 +68,18 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Prevent any element overflowing horizontally from forcing a horizontal
+     scroll on the whole page. Vertical scroll behaves normally. */
+  overflow-x: hidden;
+  /* Long words / URLs / order codes break to the next line instead of
+     stretching the parent past the viewport width. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
+
+/* All images are responsive by default — no fixed widths can blow past
+   the phone viewport. Individual images can opt out with explicit width. */
+img { max-width: 100%; height: auto; }
 
 button, input, select, textarea {
   font: inherit;
@@ -324,8 +335,8 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 .screen-header h1 {
   margin: 0;
   font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   flex: 1;
   text-align: center;
 }
@@ -364,6 +375,18 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* Make sure flex children that contain long text can wrap inside narrow
+     phone viewports — prevents horizontal overflow inside .screen-body. */
+  min-width: 0;
+}
+
+/* When a screen has a fixed tab-bar (which it almost always does on
+   merchant screens), make sure the body has enough bottom padding so the
+   last row of content isn't hidden behind it — including iPhones with the
+   home-indicator safe area. Modern browser :has() handles this without
+   touching every screen's inline style. */
+.screen:has(> .tab-bar) > .screen-body {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
 .screen-body.tight { gap: 12px; }
@@ -629,7 +652,7 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 }
 
 .list-item-body { flex: 1; min-width: 0; }
-.list-item-title { font-size: 15px; font-weight: 600; margin: 0; }
+.list-item-title { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -0.005em; }
 .list-item-sub { font-size: 13px; color: var(--c-ink-muted); margin: 2px 0 0; }
 .list-item-trail {
   font-size: 13px;
@@ -693,7 +716,10 @@ body { background: var(--c-bg-page); min-height: 100vh; }
    ========================================================================= */
 
 .tab-bar {
-  position: sticky;
+  /* Pin to viewport bottom on mobile so it stays visible on short pages.
+     The desktop @media block below switches this to position:absolute so
+     the tab bar pins to the phone-screen frame instead of the browser. */
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -703,6 +729,12 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   border-top: 1px solid var(--c-line);
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   z-index: 5;
+}
+
+@media (min-width: 900px) {
+  .tab-bar {
+    position: absolute;   /* anchored to .phone-screen (which is position:relative) */
+  }
 }
 
 .tab-bar a {
@@ -956,7 +988,7 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 .text-subtle { color: var(--c-ink-subtle); }
 .text-success { color: var(--c-success); }
 .text-danger  { color: var(--c-danger); }
-.text-bold { font-weight: 600; }
+.text-bold { font-weight: 700; }
 .text-sm { font-size: 13px; }
 .text-xs { font-size: 12px; }
 .text-lg { font-size: 18px; }
@@ -1096,12 +1128,14 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   min-height: 36px;
 }
 
-/* Sticky cart FAB on the grid view */
+/* Cart FAB on the customer storefront grid. position:fixed on mobile so it
+   pins to the viewport regardless of scroll; position:absolute on desktop so
+   it pins to the phone-screen frame instead of the browser viewport. */
 .storefront-cart-fab {
-  position: absolute;
+  position: fixed;
   left: 16px;
   right: 16px;
-  bottom: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1115,8 +1149,15 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   cursor: pointer;
   box-shadow: var(--shadow-lg);
   transition: transform 120ms var(--ease-out);
+  z-index: 6;   /* above tab-bar (z-index: 5) just in case both ever co-exist */
 }
 .storefront-cart-fab:active { transform: translateY(1px); }
+
+@media (min-width: 900px) {
+  .storefront-cart-fab {
+    position: absolute;   /* anchored to .phone-screen */
+  }
+}
 
 .storefront-cart-fab-icon {
   position: relative;

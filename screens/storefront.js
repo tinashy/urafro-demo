@@ -43,13 +43,48 @@ window.Screens.storefront = {
     if (sub === 'cart')      return renderCart(state, ctx);
     if (sub === 'checkout')  return renderCheckout(state, ctx);
     if (sub === 'done')      return renderDone(state, ctx);
+    if (sub === 'product')   return renderProductDetail(state, ctx, state.route.args[2]);
     return renderGrid(state, ctx);
   },
   init(state) {
     const sub = state.route.args[1] || 'grid';
     if (sub === 'checkout') wireCheckout(state);
+    if (!sub || sub === 'grid') wireGridSearch(state);
     // Other sub-views use inline onclick handlers; no init wiring needed.
   },
+};
+
+/* --------------- helpers (PDP size mock) --------------- */
+// For Sprint 0 the size selector is illustrative; real sizing data ships in v1.
+function pdpSizesFor(product) {
+  const cat = (product && product.category) || '';
+  if (/accessor|headwrap|clutch|bag|jewel/i.test(cat)) return ['One size'];
+  return ['S', 'M', 'L', 'XL'];
+}
+
+/* --------------- grid: search input wiring --------------- */
+function wireGridSearch(state) {
+  const el = document.getElementById('sfSearch');
+  if (!el) return;
+  // Re-render in place on each keystroke; keep focus + caret position.
+  el.addEventListener('input', () => {
+    if (!state.storefront) state.storefront = { cart: [], customer: { name: '', phone: '' }, lastOrderCode: '', search: '' };
+    state.storefront.search = el.value;
+    render();
+    // After render the new input needs focus + caret restored.
+    const after = document.getElementById('sfSearch');
+    if (after) {
+      after.focus();
+      const len = after.value.length;
+      try { after.setSelectionRange(len, len); } catch (e) {}
+    }
+  });
+}
+
+window.Screens.storefront._clearSearch = function () {
+  if (!state.storefront) return;
+  state.storefront.search = '';
+  render();
 };
 
 /* --------------- shared context --------------- */
@@ -100,7 +135,14 @@ function cartSubtotal(state) {
 
 /* --------------- view: products grid --------------- */
 function renderGrid(state, ctx) {
-  const products = AppData.products;
+  const search = (state.storefront && state.storefront.search) || '';
+  const q = search.trim().toLowerCase();
+  const all = AppData.products;
+  const products = q
+    ? all.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.category || '').toLowerCase().includes(q))
+    : all;
   const count = cartCount(state);
 
   const card = (p) => {
@@ -110,13 +152,17 @@ function renderGrid(state, ctx) {
          ${out ? `<span class="storefront-card-out">Out of stock</span>` : ''}`
       : `<span style="font-size:36px;font-weight:700;color:white;opacity:0.9">${p.name[0]}</span>
          ${out ? `<span class="storefront-card-out">Out of stock</span>` : ''}`;
+    const pdpRoute = `/storefront/${ctx.slug}/product/${p.id}`;
     return `
       <div class="storefront-card" data-out="${out}">
-        <div class="storefront-card-image" style="background:${p.color}">
+        <div class="storefront-card-image" style="background:${p.color};cursor:pointer"
+             onclick="navigate('${pdpRoute}')" role="button" tabindex="0"
+             aria-label="View ${p.name}">
           ${imageInner}
         </div>
         <div class="storefront-card-body">
-          <p class="storefront-card-name">${p.name}</p>
+          <p class="storefront-card-name" onclick="navigate('${pdpRoute}')"
+             style="cursor:pointer">${p.name}</p>
           <p class="storefront-card-price">${AppData.helpers.money(p.price)}</p>
           <button class="btn btn-primary btn-block storefront-card-cta" ${out ? 'disabled' : ''}
                   onclick="Screens.storefront._add('${p.id}')">
@@ -132,13 +178,30 @@ function renderGrid(state, ctx) {
       ${storefrontHeader(ctx)}
 
       <div class="screen-body" style="padding-bottom:${count > 0 ? 96 : 24}px">
-        <p class="text-sm text-muted" style="margin:0 0 4px">
-          ${products.length} item${products.length === 1 ? '' : 's'} available · tap to add to cart
+
+        <!-- Search — filters by product name or category -->
+        <div class="field" style="margin:0">
+          <div class="field-input" style="display:flex;align-items:center;gap:8px">
+            <span class="text-subtle" style="font-size:16px">🔎</span>
+            <input id="sfSearch" type="search" placeholder="Search ${ctx.storeName}…"
+                   value="${(search || '').replace(/"/g,'&quot;')}"
+                   style="flex:1;border:0;outline:0;background:transparent;font:inherit;color:var(--c-ink)">
+            ${q ? `<button onclick="Screens.storefront._clearSearch()" aria-label="Clear search"
+                          style="background:none;border:0;cursor:pointer;color:var(--c-ink-muted);font-size:18px;padding:0 4px">×</button>` : ''}
+          </div>
+        </div>
+
+        <p class="text-sm text-muted" style="margin:6px 0 0">
+          ${q
+            ? (products.length === 0
+                ? `No products match "${search}"`
+                : `${products.length} match${products.length === 1 ? '' : 'es'} for "${search}"`)
+            : `${all.length} item${all.length === 1 ? '' : 's'} available · tap to add to cart`}
         </p>
 
-        <div class="storefront-grid">
-          ${products.map(card).join('')}
-        </div>
+        ${products.length === 0 && q
+          ? UI.empty({ title: 'Nothing matches', sub: 'Try a different word or clear the search.', icon: '🔎' })
+          : `<div class="storefront-grid">${products.map(card).join('')}</div>`}
 
         <p class="text-xs text-subtle text-center" style="margin:24px 0 0;line-height:1.5">
           Powered by <span class="text-bold" style="color:var(--c-primary-dark)">urAfro</span> · Secure checkout
@@ -155,6 +218,117 @@ function renderGrid(state, ctx) {
           <span>${AppData.helpers.money(cartSubtotal(state))}</span>
         </button>
       ` : ''}
+    </section>
+  `;
+}
+
+/* --------------- view: product detail page (PDP) ---------------
+   Customer-facing product page reached by tapping an image / name on the
+   storefront grid. Shows hero image, name, price, mock size selector, qty
+   stepper, and a sticky Add-to-cart CTA. Out-of-stock products land here
+   too but the CTA disables. */
+function renderProductDetail(state, ctx, productId) {
+  const product = AppData.products.find(p => p.id === productId);
+
+  if (!product) {
+    setTimeout(() => navigate(`/storefront/${ctx.slug}`), 0);
+    return `<section class="screen storefront">
+      ${storefrontHeader(ctx, { compact: true, title: 'Product' })}
+      <div class="screen-body">${UI.empty({ title: 'Not found', sub: 'That product is no longer listed.', icon: '🔎' })}</div>
+    </section>`;
+  }
+
+  const out          = product.stock === 0;
+  const inCart       = state.storefront.cart.find(ln => ln.productId === productId);
+  const cartQty      = inCart ? inCart.qty : 0;
+  const sizes        = pdpSizesFor(product);
+  // Selected size + draft qty live on state so chip taps survive re-render.
+  state.storefront.pdp = state.storefront.pdp || {};
+  if (state.storefront.pdp.productId !== productId) {
+    state.storefront.pdp = { productId, size: sizes[0], qty: 1 };
+  }
+  const selSize      = state.storefront.pdp.size || sizes[0];
+  const selQty       = Math.min(Math.max(1, state.storefront.pdp.qty || 1), Math.max(1, product.stock));
+
+  const heroInner = product.photoUrl
+    ? `<img src="${product.photoUrl}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover;display:block">`
+    : `<span style="font-size:80px;font-weight:700;color:white;opacity:0.9">${product.name[0]}</span>`;
+
+  const sizeChip = (s) => `
+    <button class="chip" aria-pressed="${selSize === s}"
+            onclick="Screens.storefront._pickSize('${s.replace(/'/g,"\\'")}')">
+      ${s}
+    </button>`;
+
+  const stockNote = out
+    ? `<span style="color:var(--c-danger);font-weight:700">Out of stock</span>`
+    : product.stock <= product.lowStockAt
+      ? `<span style="color:var(--c-warning)">Only ${product.stock} left</span>`
+      : `<span style="color:var(--c-success)">In stock</span>`;
+
+  return `
+    <section class="screen storefront">
+      ${storefrontHeader(ctx, { compact: true, title: product.name.length > 28 ? product.name.slice(0, 28) + '…' : product.name })}
+
+      <div class="screen-body" style="padding:0 0 168px;gap:0">
+
+        <!-- Hero image -->
+        <div style="background:${product.color};aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden">
+          ${heroInner}
+        </div>
+
+        <!-- Product info -->
+        <div style="padding:18px 20px 0;display:flex;flex-direction:column;gap:12px">
+
+          <div>
+            <p class="text-bold" style="margin:0;font-size:20px;letter-spacing:-0.01em;line-height:1.3">${product.name}</p>
+            <p class="text-bold" style="margin:6px 0 0;font-size:22px;color:var(--c-primary-dark);font-family:var(--font-mono);letter-spacing:-0.01em">${AppData.helpers.money(product.price)}</p>
+            <p class="text-sm" style="margin:6px 0 0">${stockNote}${product.category ? ` <span class="text-subtle">· ${product.category}</span>` : ''}</p>
+          </div>
+
+          <p class="text-sm text-muted" style="margin:0;line-height:1.5">
+            Handmade by ${ctx.storeName}. Tap the size that fits, pick your quantity, and add to cart — ${ctx.storeName} will message you to confirm and arrange delivery.
+          </p>
+
+          <!-- Size selector -->
+          <div>
+            <p class="section-label-title" style="margin:0 0 8px">Size</p>
+            <div class="row row-sm" style="gap:8px;flex-wrap:wrap">
+              ${sizes.map(sizeChip).join('')}
+            </div>
+          </div>
+
+          <!-- Quantity stepper -->
+          <div>
+            <p class="section-label-title" style="margin:0 0 8px">Quantity</p>
+            <div class="row" style="align-items:center;gap:12px">
+              <div class="cart-line-stepper" style="margin:0">
+                <button onclick="Screens.storefront._pdpQty(-1)" aria-label="Decrease quantity" ${selQty <= 1 ? 'disabled' : ''}>−</button>
+                <span>${selQty}</span>
+                <button onclick="Screens.storefront._pdpQty(1)" aria-label="Increase quantity" ${out || selQty >= product.stock ? 'disabled' : ''}>+</button>
+              </div>
+              ${out ? '' : `<span class="text-xs text-muted">${product.stock} available</span>`}
+            </div>
+          </div>
+
+          ${cartQty > 0 ? `
+            <p class="text-xs text-muted" style="margin:0">
+              You already have <span class="text-bold" style="color:var(--c-ink)">${cartQty}</span> in your cart. Adding now will bring it to ${Math.min(cartQty + selQty, product.stock)}.
+            </p>
+          ` : ''}
+        </div>
+      </div>
+
+      <footer class="screen-footer" style="position:fixed;left:0;right:0;bottom:0">
+        <button class="btn btn-primary btn-block" ${out ? 'disabled' : ''}
+                onclick="Screens.storefront._pdpAddToCart()">
+          ${out ? 'Out of stock' : `Add ${selQty} to cart · ${AppData.helpers.money(product.price * selQty)}`}
+        </button>
+        <button class="btn btn-link" style="text-align:center"
+                onclick="navigate('/storefront/${ctx.slug}')">
+          ← Keep shopping
+        </button>
+      </footer>
     </section>
   `;
 }
@@ -381,6 +555,43 @@ function renderDone(state, ctx) {
     </section>
   `;
 }
+
+/* =========================================================================
+   PDP mutators — size / qty draft + Add-to-cart from the product page
+   ========================================================================= */
+window.Screens.storefront._pickSize = function (size) {
+  state.storefront.pdp = state.storefront.pdp || {};
+  state.storefront.pdp.size = size;
+  render();
+};
+
+window.Screens.storefront._pdpQty = function (delta) {
+  const pdp = state.storefront.pdp || {};
+  const product = AppData.products.find(p => p.id === pdp.productId);
+  if (!product) return;
+  const next = Math.min(Math.max(1, (pdp.qty || 1) + delta), Math.max(1, product.stock));
+  pdp.qty = next;
+  state.storefront.pdp = pdp;
+  render();
+};
+
+window.Screens.storefront._pdpAddToCart = function () {
+  const pdp = state.storefront.pdp || {};
+  const product = AppData.products.find(p => p.id === pdp.productId);
+  if (!product || product.stock === 0) return;
+  const cart = state.storefront.cart;
+  const existing = cart.find(ln => ln.productId === pdp.productId);
+  const desired = (pdp.qty || 1);
+  if (existing) {
+    existing.qty = Math.min(existing.qty + desired, product.stock);
+  } else {
+    cart.push({ productId: pdp.productId, qty: Math.min(desired, product.stock) });
+  }
+  // Reset draft + bounce back to the storefront grid so the cart FAB shows.
+  const slug = state.route.args[0] || AppData.merchant.storeSlug;
+  state.storefront.pdp = null;
+  navigate(`/storefront/${slug}`);
+};
 
 /* =========================================================================
    Cart mutators (called from inline onclick) — render() afterwards

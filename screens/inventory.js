@@ -89,23 +89,69 @@ function flashBanner() {
 window.Screens.inventory = {
   title: 'Inventory',
   render(state) {
-    const sort = state.inventory.sort || 'low-first';
-    const products = sortProducts(AppData.products, sort);
-    const total = products.length;
-    const lowCount = products.filter(p => p.stock > 0 && p.stock <= p.lowStockAt).length;
-    const outCount = products.filter(p => p.stock === 0).length;
-    const totalValue = products.reduce((s, p) => s + (p.price * p.stock), 0);
+    const inv         = state.inventory || {};
+    const sort        = inv.sort || 'low-first';
+    const search      = (inv.search || '').trim();
+    const q           = search.toLowerCase();
+    const stockFilter = inv.stockFilter || 'all';
+    const selectMode  = !!inv.selectMode;
+    const selectedSet = new Set(inv.selected || []);
 
-    const sortChip = (key, label) =>
-      `<button class="chip" aria-pressed="${sort === key}" data-sort="${key}">${label}</button>`;
+    // Stock-filter predicate. 'all' lets everything through.
+    const stockOK = (p) => {
+      if (stockFilter === 'low') return p.stock > 0 && p.stock <= p.lowStockAt;
+      if (stockFilter === 'out') return p.stock === 0;
+      if (stockFilter === 'in')  return p.stock > p.lowStockAt;
+      return true;
+    };
+    const matchesSearch = (p) => {
+      if (!q) return true;
+      return p.name.toLowerCase().includes(q) ||
+             (p.category || '').toLowerCase().includes(q);
+    };
+
+    const filtered = AppData.products.filter(p => stockOK(p) && matchesSearch(p));
+    const products = sortProducts(filtered, sort);
+
+    // Counts use the FULL product set so the chip counts don't shift when the
+    // user types — the chip count is "how many fit this filter", not "how many
+    // fit this filter AND your search".
+    const total = AppData.products.length;
+    const lowCount = AppData.products.filter(p => p.stock > 0 && p.stock <= p.lowStockAt).length;
+    const outCount = AppData.products.filter(p => p.stock === 0).length;
+    const inCount  = AppData.products.filter(p => p.stock > p.lowStockAt).length;
+    const totalValue = AppData.products.reduce((s, p) => s + (p.price * p.stock), 0);
+
+    const filterChip = (key, label, count) => `
+      <button class="chip" aria-pressed="${stockFilter === key}" data-filter="${key}">
+        ${label}<span class="text-subtle" style="margin-left:6px">${count}</span>
+      </button>
+    `;
 
     const row = (p) => {
       const pill = AppData.helpers.stockPill(p.stock, p.lowStockAt);
       const thumb = p.photoUrl
         ? `<img src="${p.photoUrl}" alt="" class="list-item-icon" style="object-fit:cover;background:transparent">`
         : `<div class="list-item-icon" style="background:${p.color};color:white;font-weight:700">${p.name[0]}</div>`;
+
+      const isSelected = selectedSet.has(p.id);
+      const checkbox = selectMode ? `
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+                     border-radius:6px;border:2px solid ${isSelected ? 'var(--c-primary)' : 'var(--c-line-strong)'};
+                     background:${isSelected ? 'var(--c-primary)' : 'transparent'};
+                     margin-right:10px;flex-shrink:0">
+          ${isSelected
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+            : ''}
+        </span>` : '';
+
+      const onclick = selectMode
+        ? `Screens.inventory._toggleSelect('${p.id}')`
+        : `navigate('/product/${p.id}')`;
+
       return `
-        <div class="list-item" onclick="navigate('/product/${p.id}')">
+        <div class="list-item" onclick="${onclick}" data-selected="${isSelected}">
+          ${checkbox}
           ${thumb}
           <div class="list-item-body">
             <p class="list-item-title">${p.name}</p>
@@ -119,7 +165,7 @@ window.Screens.inventory = {
       `;
     };
 
-    const empty = `
+    const emptyAll = `
       ${UI.empty({
         title: 'No products yet',
         sub: 'Add your first product to start taking orders.',
@@ -128,66 +174,186 @@ window.Screens.inventory = {
       <div style="padding:0 20px"><button class="btn btn-primary btn-block" onclick="navigate('/product/new')">+ Add product</button></div>
     `;
 
+    const emptyFiltered = UI.empty({
+      title: 'Nothing matches',
+      sub: q
+        ? `No products match "${search}".`
+        : 'No products in this filter — try "All".',
+      icon: '🔎',
+    });
+
+    const headerTitle = selectMode
+      ? `${selectedSet.size} selected`
+      : 'Inventory';
+    const headerAction = selectMode
+      ? { label: 'Cancel', onClick: 'Screens.inventory._cancelSelect()' }
+      : { label: '+ Add',  onClick: "navigate('/product/new')" };
+
     return `
       <section class="screen">
-        ${UI.header({
-          title: 'Inventory',
-          back: '/inbox',
-          action: { label: '+ Add', onClick: "navigate('/product/new')" },
-        })}
+        ${UI.header({ title: headerTitle, back: '/inbox', action: headerAction })}
 
         ${flashBanner()}
 
-        <div class="screen-body" style="padding-bottom:88px">
+        <div class="screen-body" style="padding-bottom:${selectMode && selectedSet.size > 0 ? 140 : 88}px">
 
-          <!-- Top stats strip -->
-          <div class="row row-sm" style="gap:8px">
-            <div class="card" style="flex:1;padding:12px 14px">
-              <p class="text-xs text-muted" style="margin:0">Products</p>
-              <p class="text-lg text-bold" style="margin:2px 0 0">${total}</p>
+          ${!selectMode ? `
+            <!-- Top stats strip -->
+            <div class="row row-sm" style="gap:8px">
+              <div class="card" style="flex:1;padding:12px 14px">
+                <p class="text-xs text-muted" style="margin:0">Products</p>
+                <p class="text-lg text-bold" style="margin:2px 0 0">${total}</p>
+              </div>
+              <div class="card" style="flex:1;padding:12px 14px">
+                <p class="text-xs text-muted" style="margin:0">Low / out</p>
+                <p class="text-lg text-bold" style="margin:2px 0 0;color:${(lowCount + outCount) ? 'var(--c-warning)' : 'var(--c-ink)'}">
+                  ${lowCount + outCount}
+                </p>
+              </div>
+              <div class="card" style="flex:1.4;padding:12px 14px">
+                <p class="text-xs text-muted" style="margin:0">Stock value</p>
+                <p class="text-lg text-bold" style="margin:2px 0 0">${AppData.helpers.money(totalValue)}</p>
+              </div>
             </div>
-            <div class="card" style="flex:1;padding:12px 14px">
-              <p class="text-xs text-muted" style="margin:0">Low / out</p>
-              <p class="text-lg text-bold" style="margin:2px 0 0;color:${(lowCount + outCount) ? 'var(--c-warning)' : 'var(--c-ink)'}">
-                ${lowCount + outCount}
-              </p>
-            </div>
-            <div class="card" style="flex:1.4;padding:12px 14px">
-              <p class="text-xs text-muted" style="margin:0">Stock value</p>
-              <p class="text-lg text-bold" style="margin:2px 0 0">${AppData.helpers.money(totalValue)}</p>
-            </div>
-          </div>
+          ` : ''}
 
-          <!-- Sort chips -->
-          <div class="row row-sm" style="gap:8px;flex-wrap:wrap" id="invSortChips">
-            ${sortChip('low-first', 'Low stock first')}
-            ${sortChip('a-z',       'A–Z')}
-            ${sortChip('value',     'By value')}
-          </div>
+          <!-- Search -->
+          ${total > 0 ? `
+            <div class="field" style="margin:0">
+              <div class="field-input" style="display:flex;align-items:center;gap:8px">
+                <span class="text-subtle" style="font-size:16px">🔎</span>
+                <input id="invSearch" type="search" placeholder="Search products or categories"
+                       value="${search.replace(/"/g,'&quot;')}"
+                       style="flex:1;border:0;outline:0;background:transparent;font:inherit;color:var(--c-ink)">
+                ${search ? `<button onclick="Screens.inventory._clearSearch()" aria-label="Clear search"
+                                    style="background:none;border:0;cursor:pointer;color:var(--c-ink-muted);font-size:18px;padding:0 4px">×</button>` : ''}
+              </div>
+            </div>
+          ` : ''}
+
+          <!-- Stock filter chips. Sort is fixed to "Low first" so the most
+               attention-needing products bubble up; no separate sort row. -->
+          ${total > 0 ? `
+            <div class="row row-sm" style="gap:8px;flex-wrap:wrap" id="invFilterChips">
+              ${filterChip('all', 'All',          total)}
+              ${filterChip('low', 'Low stock',    lowCount)}
+              ${filterChip('out', 'Out of stock', outCount)}
+              ${filterChip('in',  'In stock',     inCount)}
+            </div>
+          ` : ''}
 
           <!-- Product list -->
-          ${total === 0 ? empty : `<div class="list">${products.map(row).join('')}</div>`}
+          ${total === 0
+            ? emptyAll
+            : (products.length === 0
+                ? emptyFiltered
+                : `<div class="list">${products.map(row).join('')}</div>`)}
 
-          ${total > 0 ? `
+          ${total > 0 && !selectMode && products.length > 0 ? `
             <button class="btn btn-secondary btn-block" onclick="navigate('/product/new')" style="margin-top:8px">
               + Add another product
             </button>` : ''}
         </div>
 
-        ${UI.tabBar('inventory')}
+        ${selectMode && selectedSet.size > 0 ? `
+          <footer class="screen-footer">
+            <div class="row row-sm" style="gap:8px">
+              <button class="btn btn-secondary" style="flex:1"
+                      onclick="Screens.inventory._bulkOutOfStock()">
+                Mark out of stock
+              </button>
+              <button class="btn btn-secondary" style="flex:1;color:var(--c-danger);border-color:var(--c-danger)"
+                      onclick="Screens.inventory._bulkDelete()">
+                Delete (${selectedSet.size})
+              </button>
+            </div>
+          </footer>
+        ` : ''}
+
+        ${!selectMode ? UI.tabBar('inventory') : ''}
       </section>
     `;
   },
   init(state) {
-    const wrap = document.getElementById('invSortChips');
-    if (!wrap) return;
-    wrap.querySelectorAll('button[data-sort]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.inventory.sort = btn.dataset.sort;
+    // Search input — re-render in place on each keystroke; keep focus + caret.
+    const searchEl = document.getElementById('invSearch');
+    if (searchEl) {
+      searchEl.addEventListener('input', () => {
+        state.inventory.search = searchEl.value;
         render();
+        const after = document.getElementById('invSearch');
+        if (after) {
+          after.focus();
+          const len = after.value.length;
+          try { after.setSelectionRange(len, len); } catch (e) {}
+        }
       });
-    });
+    }
+
+    // Stock-filter chips
+    const fwrap = document.getElementById('invFilterChips');
+    if (fwrap) {
+      fwrap.querySelectorAll('button[data-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.inventory.stockFilter = btn.dataset.filter;
+          render();
+        });
+      });
+    }
+
   },
+};
+
+/* --------------- inventory: search / filter / bulk mutators --------------- */
+window.Screens.inventory._clearSearch = function () {
+  state.inventory.search = '';
+  render();
+};
+
+window.Screens.inventory._enterSelect = function () {
+  state.inventory.selectMode = true;
+  state.inventory.selected = [];
+  render();
+};
+
+window.Screens.inventory._cancelSelect = function () {
+  state.inventory.selectMode = false;
+  state.inventory.selected = [];
+  render();
+};
+
+window.Screens.inventory._toggleSelect = function (id) {
+  const arr = state.inventory.selected || [];
+  const i = arr.indexOf(id);
+  if (i >= 0) arr.splice(i, 1);
+  else arr.push(id);
+  state.inventory.selected = arr;
+  render();
+};
+
+window.Screens.inventory._bulkOutOfStock = function () {
+  const ids = state.inventory.selected || [];
+  if (ids.length === 0) return;
+  let touched = 0;
+  ids.forEach(id => {
+    const p = AppData.products.find(x => x.id === id);
+    if (p && p.stock !== 0) { p.stock = 0; touched++; }
+  });
+  state.inventory.flash = `${touched} product${touched === 1 ? '' : 's'} marked out of stock`;
+  state.inventory.selectMode = false;
+  state.inventory.selected = [];
+  render();
+};
+
+window.Screens.inventory._bulkDelete = function () {
+  const ids = state.inventory.selected || [];
+  if (ids.length === 0) return;
+  if (!confirm(`Delete ${ids.length} product${ids.length === 1 ? '' : 's'}? This can't be undone in the demo.`)) return;
+  AppData.products = AppData.products.filter(p => !ids.includes(p.id));
+  state.inventory.flash = `${ids.length} product${ids.length === 1 ? '' : 's'} deleted`;
+  state.inventory.selectMode = false;
+  state.inventory.selected = [];
+  render();
 };
 
 /* =========================================================================

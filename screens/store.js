@@ -39,8 +39,11 @@ window.Screens.store = {
 
     const liveProducts   = AppData.products.length;
     const inStock        = AppData.products.filter(p => p.stock > 0).length;
-    const url            = `urafro.shop/${slug}`;
-    const fullUrl        = `https://${url}`;
+    // Display string is intentionally short ("urafro-demo.pages.dev/amara-fashion");
+    // the actual share/copy uses the full hash-routed URL so customers land
+    // on the storefront grid wherever the demo is deployed.
+    const url            = UI.storefrontDisplay(slug);
+    const fullUrl        = UI.storefrontUrl(slug);
 
     return `
       <section class="screen">

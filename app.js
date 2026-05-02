@@ -19,7 +19,14 @@ window.state = {
   auth: { phoneDraft: '', otp: '' },
   onboarding: { step: 1, storeName: '', tagline: '', slug: '', products: [], editingProductIdx: -1, productDraft: null },
   inbox: { filter: 'all' }, // all | new | confirmed | fulfilled | cancelled
-  inventory: { sort: 'low-first' },
+  inventory: {
+    sort: 'low-first',
+    search: '',           // free-text product search
+    stockFilter: 'all',   // all | low | out | in
+    selectMode: false,    // bulk-select mode on/off
+    selected: [],         // product ids in current bulk selection
+  },
+  storefront: { cart: [], customer: { name: '', phone: '' }, lastOrderCode: '', search: '' },
   roadmapFilter: 'now',    // for "What's coming" chip filter
 };
 
@@ -49,9 +56,17 @@ function render() {
   // Let screens wire event handlers after DOM insertion.
   if (screen.init) screen.init(window.state);
 
-  // Scroll the app surface to top on route change.
+  // Scroll to top on every route change. Belt-and-braces: the app surface
+  // scrolls on desktop (phone-frame view), the document scrolls on mobile,
+  // so reset all three so the merchant always lands at the top of the new
+  // screen regardless of device.
   const surface = app();
-  surface.scrollTop = 0;
+  if (surface) surface.scrollTop = 0;
+  if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo(0, 0);
+  if (typeof document !== 'undefined') {
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+  }
 }
 
 // Simple navigation helper — screens call navigate('inbox') or go('inbox/ord_001')
