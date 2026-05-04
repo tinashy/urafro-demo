@@ -8,32 +8,7 @@
 window.Screens = window.Screens || {};
 
 window.UI = {
-  
-  container(children = '', className = '') {
-    return `<div class="app-container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${className}">${children}</div>`;
-  },
-
-  section(children = '', className = '') {
-    return `<section class="app-section py-12 sm:py-16 lg:py-20 ${className}">${children}</section>`;
-  },
-
-  card(children = '', className = '') {
-    return `<div class="card p-4 sm:p-5 border border-stone-200 rounded-xl shadow-sm bg-white ${className}">${children}</div>`;
-  },
-
-  input(attrs = '', className = '') {
-    return `<input class="w-full px-3 py-2.5 rounded-xl border border-stone-300 bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${className}" ${attrs}>`;
-  },
-
-  button(label, attrs = '', className = '') {
-    return `<button class="btn inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 rounded-xl font-medium bg-teal-600 text-white hover:bg-teal-700 transition-colors ${className}" ${attrs}>${label}</button>`;
-  },
-
-  stack(children = '', rowOnDesktop = false, className = '') {
-    const mode = rowOnDesktop ? 'layout-stack-lg-row' : 'layout-stack';
-    return `<div class="${mode} ${className}">${children}</div>`;
-  },
-/** Standard screen header with back arrow + title + optional right action */
+  /** Standard screen header with back arrow + title + optional right action */
   header({ title, back = null, action = null }) {
     const backEl = back
       ? `<button class="screen-header-back" onclick="${typeof back === 'string' ? `navigate('${back}')` : back}" aria-label="Back">
@@ -43,7 +18,7 @@ window.UI = {
     const actionEl = action
       ? `<button class="screen-header-action" onclick="${action.onClick}">${action.label}</button>`
       : '<span style="width:40px"></span>';
-    return `<header class="screen-header px-4 sm:px-6 lg:px-8">${backEl}<h1>${title}</h1>${actionEl}</header>`;
+    return `<header class="screen-header">${backEl}<h1>${title}</h1>${actionEl}</header>`;
   },
 
   /** Bottom tab bar — 4 slots. Pass current screen key to highlight. */
@@ -76,7 +51,7 @@ window.UI = {
     const chip = (key, label) =>
       `<button class="chip" aria-pressed="${activeKey === key}" onclick="state.roadmapFilter='${key}';render()">${label}</button>`;
     return `
-      <div class="chip-row flex flex-wrap gap-2">
+      <div class="chip-row">
         ${chip('now',      'Now')}
         ${chip('3mo',      '3 months')}
         ${chip('6mo',      '6 months')}
@@ -114,9 +89,9 @@ window.UI = {
   /** Full-screen placeholder for any screen not yet built */
   placeholderScreen({ title, note }) {
     return `
-      <section class="screen flex flex-col min-h-full">
+      <section class="screen">
         ${UI.header({ title, back: '/coming' })}
-        <div class="screen-body app-container app-section flex items-center justify-center text-center">
+        <div class="screen-body" style="justify-content:center;align-items:center;text-align:center;padding:48px 24px">
           <div style="width:72px;height:72px;border-radius:20px;background:var(--c-primary-soft);color:var(--c-primary-dark);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:16px">🛠️</div>
           <h2 class="text-xl mb-2">${title}</h2>
           <p class="text-muted" style="max-width:280px">${note || "We're still building this one — see the roadmap for an ETA."}</p>

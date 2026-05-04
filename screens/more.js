@@ -23,10 +23,10 @@ window.Screens.more = {
       `<p class="section-label-title" style="margin:18px 0 8px">${label}</p>`;
 
     return `
-      <section class="screen layout-stack">
+      <section class="screen">
         ${UI.header({ title: 'More' })}
 
-        <div class="screen-body app-container" style="padding-bottom:88px">
+        <div class="screen-body" style="padding-bottom:88px">
 
           ${sectionLabel('Help & info')}
           <div class="list">

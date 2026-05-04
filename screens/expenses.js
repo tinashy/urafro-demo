@@ -48,10 +48,10 @@ window.Screens.expenses = {
     `;
 
     return `
-      <section class="screen layout-stack">
+      <section class="screen">
         ${UI.header({ title: 'Expenses & P&L', back: '/coming' })}
 
-        <div class="screen-body app-container" style="padding-bottom:88px">
+        <div class="screen-body" style="padding-bottom:88px">
 
           <div style="display:inline-block;padding:6px 12px;border-radius:var(--r-pill);background:var(--c-info-bg);color:var(--c-info);font-size:12px;font-weight:600;letter-spacing:0.02em;align-self:flex-start">
             Within 6 months · Tier 2

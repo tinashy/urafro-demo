@@ -84,10 +84,10 @@ const STEPS = {
       const ob = state.onboarding;
       const ok = (ob.storeName || '').trim().length >= 2;
       return `
-        <section class="screen layout-stack">
+        <section class="screen">
           ${header(state, 'Name your store')}
           ${progress(1)}
-          <div class="screen-body app-container">
+          <div class="screen-body">
             <div class="stack stack-md">
               <p class="text-sm text-muted" style="margin:0">
                 This is what customers will see. You can change it later.
@@ -144,10 +144,10 @@ const STEPS = {
       const swatches = ['#0D9488', '#0F766E', '#0E7490', '#7C3AED', '#DB2777', '#EA580C', '#D97706', '#65A30D'];
       const initial = (ob.storeName || 'Store').trim()[0].toUpperCase();
       return `
-        <section class="screen layout-stack">
+        <section class="screen">
           ${header(state, 'Pick a look')}
           ${progress(2)}
-          <div class="screen-body app-container">
+          <div class="screen-body">
             <div class="stack stack-md">
               <p class="text-sm text-muted" style="margin:0">
                 Your brand colour shows on your storefront, receipts, and customer notifications.
@@ -324,10 +324,10 @@ const STEPS = {
       };
 
       return `
-        <section class="screen layout-stack">
+        <section class="screen">
           ${header(state, 'Add your first products')}
           ${progress(3)}
-          <div class="screen-body app-container">
+          <div class="screen-body">
             <div class="stack stack-md">
               <p class="text-sm text-muted" style="margin:0">
                 Add 3 things you sell. You can add more later, and edit anything you put in here.
@@ -410,10 +410,10 @@ const STEPS = {
       const slug = ob.slug || suggested;
       const valid = /^[a-z0-9][a-z0-9-]{1,29}$/.test(slug);
       return `
-        <section class="screen layout-stack">
+        <section class="screen">
           ${header(state, 'Your storefront link')}
           ${progress(4)}
-          <div class="screen-body app-container">
+          <div class="screen-body">
             <div class="stack stack-md">
               <p class="text-sm text-muted" style="margin:0">
                 This is the link you'll share on WhatsApp. Customers tap it to see what you have.
@@ -476,10 +476,10 @@ const STEPS = {
       const url     = UI.storefrontDisplay(slug);  // host + slug, no protocol
       const fullUrl = UI.storefrontUrl(slug);      // hash-routed link customers tap
       return `
-        <section class="screen layout-stack">
+        <section class="screen">
           ${header(state, "You're all set")}
           ${progress(5)}
-          <div class="screen-body app-container" style="text-align:center;padding-top:32px">
+          <div class="screen-body" style="text-align:center;padding-top:32px">
             <div class="stack stack-md" style="align-items:center">
               <div style="width:88px;height:88px;border-radius:24px;background:var(--c-success-bg);color:var(--c-success);display:flex;align-items:center;justify-content:center;margin-bottom:8px">
                 <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>

@@ -83,7 +83,7 @@ function renderPlaceholder(meta, key) {
   }[meta.kind] || 'Roadmap';
 
   return `
-    <section class="screen layout-stack">
+    <section class="screen">
       <header class="screen-header">
         <button class="screen-header-back" onclick="navigate('/inbox')" aria-label="Back to inbox">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -92,7 +92,7 @@ function renderPlaceholder(meta, key) {
         <span style="width:40px"></span>
       </header>
 
-      <div class="screen-body app-container" style="justify-content:center;align-items:center;text-align:center;padding:48px 24px">
+      <div class="screen-body" style="justify-content:center;align-items:center;text-align:center;padding:48px 24px">
         <div style="display:inline-block;padding:6px 12px;border-radius:var(--r-pill);background:${tagBg};color:${tagFg};font-size:12px;font-weight:600;letter-spacing:0.02em;margin-bottom:20px">
           ${tagLabel}
         </div>

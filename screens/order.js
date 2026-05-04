@@ -31,9 +31,9 @@ window.Screens.order = {
 
     if (!o) {
       return `
-        <section class="screen layout-stack">
+        <section class="screen">
           ${UI.header({ title: 'Order not found', back: '/inbox' })}
-          <div class="screen-body app-container">
+          <div class="screen-body">
             ${UI.empty({ title: 'Order not found', sub: 'It may have been removed.', icon: '🤔' })}
           </div>
         </section>
@@ -47,11 +47,11 @@ window.Screens.order = {
     state.orderFlash = null; // one-shot
 
     return `
-      <section class="screen layout-stack">
+      <section class="screen">
         ${UI.header({ title: o.code, back: '/inbox' })}
         ${flash ? `<div class="flash-toast">${flash}</div>` : ''}
 
-        <div class="screen-body app-container" style="padding-bottom:${footerHidden(o) ? 24 : 132}px">
+        <div class="screen-body" style="padding-bottom:${footerHidden(o) ? 24 : 132}px">
 
           <!-- Customer card -->
           <div class="card" style="padding:14px 16px">

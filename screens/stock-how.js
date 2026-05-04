@@ -42,10 +42,10 @@ window.Screens['stock-how'] = {
     `;
 
     return `
-      <section class="screen layout-stack">
+      <section class="screen">
         ${UI.header({ title: 'How stock works', back: '/inventory' })}
 
-        <div class="screen-body app-container" style="padding-top:16px;padding-bottom:24px">
+        <div class="screen-body" style="padding-top:16px;padding-bottom:24px">
           <p class="text-sm text-muted" style="margin:0 0 4px;text-align:center;line-height:1.5">
             Stock updates automatically when you confirm or cancel orders. No more spreadsheet sync.
           </p>
