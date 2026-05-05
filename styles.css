@@ -1,12 +1,17 @@
-/* Tailwind-driven responsive foundations */
-:root { --fluid-h1: clamp(1.75rem, 3vw + 1rem, 2.5rem); --fluid-h2: clamp(1.375rem, 2vw + 1rem, 2rem); }
+/* =========================================================================
+   Fluid typography defaults — applies to any bare h1/h2 outside a screen
+   header. Screen headers use their own clamp() inside .screen-header h1.
+   ========================================================================= */
+:root {
+  --fluid-h1: clamp(1.75rem, 3vw + 1rem, 2.5rem);
+  --fluid-h2: clamp(1.375rem, 2vw + 1rem, 2rem);
+}
 h1 { font-size: var(--fluid-h1); line-height: 1.15; }
 h2 { font-size: var(--fluid-h2); line-height: 1.2; }
+
+/* Belt-and-braces overflow guards — repeated in body/.screen rules below
+   so no rogue inline width can force horizontal page scroll. */
 .screen, .screen-body, .app-surface { width: 100%; max-width: 100%; overflow-x: hidden; }
-.grid-responsive { display:grid; grid-template-columns:repeat(1,minmax(0,1fr)); gap:1rem; }
-@media (min-width: 768px){ .grid-responsive{grid-template-columns:repeat(2,minmax(0,1fr));} }
-@media (min-width: 1024px){ .grid-responsive{grid-template-columns:repeat(3,minmax(0,1fr));} .stack-responsive{display:flex;flex-direction:row;} }
-.stack-responsive{display:flex;flex-direction:column;gap:1rem;}
 
 /* =========================================================================
    urAfro demo — design system
@@ -55,11 +60,13 @@ h2 { font-size: var(--fluid-h2); line-height: 1.2; }
   --shadow-md: 0 4px 12px rgba(28, 25, 23, 0.06), 0 1px 3px rgba(28, 25, 23, 0.04);
   --shadow-lg: 0 12px 32px rgba(28, 25, 23, 0.10), 0 4px 12px rgba(28, 25, 23, 0.06);
 
-  /* Radius */
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 14px;
-  --r-xl: 20px;
+  /* Radius — rem so corners scale with the user's font-size preference.
+     --r-pill stays an absolute large value (it's a "make this fully round"
+     sentinel, not a dimension). */
+  --r-sm: 0.375rem;
+  --r-md: 0.625rem;
+  --r-lg: 0.875rem;
+  --r-xl: 1.25rem;
   --r-pill: 999px;
 
   /* Timing */
@@ -68,11 +75,17 @@ h2 { font-size: var(--fluid-h2); line-height: 1.2; }
 
 *, *::before, *::after { box-sizing: border-box; }
 
+html {
+  /* 100% defers to the user's browser font-size preference (typically 16px).
+     Every rem value in this file scales accordingly — accessibility win. */
+  font-size: 100%;
+}
+
 html, body {
   margin: 0;
   padding: 0;
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--c-ink);
   -webkit-font-smoothing: antialiased;
@@ -97,11 +110,10 @@ button, input, select, textarea {
 }
 
 /* iOS Safari auto-zooms a page whenever a form field with font-size < 16px
-   gets focus. Force every text-input control to 16px so the page never
-   zooms in on tap. Visual size is unchanged — 16px is already the design
-   default for inputs. */
+   gets focus. Force every text-input control to 1rem (= browser default,
+   typically 16px) so the page never zooms in on tap. */
 input, select, textarea {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 button { cursor: pointer; border: 0; background: none; padding: 0; }
@@ -150,7 +162,7 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   background: var(--c-bg-page);
 }
 
-@media (min-width: 900px) {
+@media (min-width: 56.25rem) {
   .desktop-frame {
     grid-template-columns: 300px 420px;
     gap: 56px;
@@ -338,13 +350,15 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 }
 
 .screen-header {
-  padding: 16px 20px 12px;
+  /* clamp inline padding so headers feel right on both 320px phones and
+     wide tablets without a media query */
+  padding: 1rem clamp(0.875rem, 4vw, 1.25rem) 0.75rem;
   background: var(--c-bg-surface);
   border-bottom: 1px solid var(--c-line);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
   position: sticky;
   top: 0;
   z-index: 5;
@@ -352,47 +366,58 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 
 .screen-header h1 {
   margin: 0;
-  font-size: 17px;
+  /* fluid title — never smaller than 1rem, never larger than 1.125rem */
+  font-size: clamp(1rem, 4.4vw, 1.125rem);
   font-weight: 700;
   letter-spacing: -0.015em;
   flex: 1;
   text-align: center;
+  /* never let a long title push the back/action buttons off-screen */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .screen-header-back {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: -8px;
+  margin-left: -0.5rem;
   color: var(--c-primary-dark);
   font-weight: 500;
   border-radius: var(--r-sm);
+  flex-shrink: 0;
 }
 
 .screen-header-back:active { background: var(--c-bg-soft); }
 
 .screen-header-action {
-  min-width: 40px;
-  height: 40px;
+  min-width: 2.5rem;
+  height: 2.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-right: -8px;
+  margin-right: -0.5rem;
   color: var(--c-primary-dark);
   font-weight: 500;
-  font-size: 15px;
-  padding: 0 10px;
+  font-size: 0.9375rem;
+  padding: 0 0.625rem;
   border-radius: var(--r-sm);
+  flex-shrink: 0;
 }
 
 .screen-body {
   flex: 1;
-  padding: 20px;
+  /* Mobile-first padding scales fluidly with viewport width up to ~1.25rem
+     on regular phones; the standardization rules near the bottom of this
+     file widen it further at 640px+ and 1024px+ breakpoints. */
+  padding: clamp(0.875rem, 4vw, 1.25rem);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
   /* Make sure flex children that contain long text can wrap inside narrow
      phone viewports — prevents horizontal overflow inside .screen-body. */
   min-width: 0;
@@ -404,19 +429,19 @@ body { background: var(--c-bg-page); min-height: 100vh; }
    home-indicator safe area. Modern browser :has() handles this without
    touching every screen's inline style. */
 .screen:has(> .tab-bar) > .screen-body {
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
 }
 
-.screen-body.tight { gap: 12px; }
+.screen-body.tight { gap: 0.75rem; }
 .screen-body.no-padding { padding: 0; }
 
 .screen-footer {
-  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  padding: 1rem clamp(0.875rem, 4vw, 1.25rem) calc(1rem + env(safe-area-inset-bottom));
   background: var(--c-bg-surface);
   border-top: 1px solid var(--c-line);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 /* =========================================================================
@@ -468,14 +493,14 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 14px 20px;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
   border-radius: var(--r-md);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1;
   transition: transform 80ms var(--ease-out), background 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
-  min-height: 50px;
+  min-height: 3.125rem;
   border: 1px solid transparent;
   -webkit-tap-highlight-color: transparent;
 }
@@ -500,8 +525,8 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 .btn-ghost {
   background: transparent;
   color: var(--c-primary-dark);
-  padding: 10px 12px;
-  min-height: 40px;
+  padding: 0.625rem 0.75rem;
+  min-height: 2.5rem;
 }
 .btn-ghost:hover { background: var(--c-bg-soft); }
 
@@ -516,19 +541,19 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 .btn-link {
   color: var(--c-primary-dark);
   font-weight: 500;
-  font-size: 15px;
+  font-size: 0.9375rem;
   text-decoration: none;
-  padding: 4px;
+  padding: 0.25rem;
 }
 
 /* =========================================================================
    Inputs
    ========================================================================= */
 
-.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
 
 .field-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--c-ink-soft);
   letter-spacing: 0.01em;
@@ -540,15 +565,15 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   border: 1px solid var(--c-line-strong);
   background: var(--c-bg-surface);
   border-radius: var(--r-md);
-  padding: 0 14px;
-  min-height: 52px;
+  padding: 0 0.875rem;
+  min-height: 3.25rem;
   min-width: 0;
   transition: border-color 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
 }
 
 .field-input:focus-within {
   border-color: var(--c-primary);
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+  box-shadow: 0 0 0 0.1875rem rgba(13, 148, 136, 0.12);
 }
 
 .field-input input {
@@ -556,25 +581,25 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 16px;
-  padding: 14px 0;
+  font-size: 1rem;
+  padding: 0.875rem 0;
   min-width: 0;
 }
 
 .field-input-prefix {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--c-ink-muted);
-  padding-right: 10px;
+  padding-right: 0.625rem;
   border-right: 1px solid var(--c-line);
-  margin-right: 12px;
+  margin-right: 0.75rem;
   white-space: nowrap;
 }
 
 .field-hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--c-ink-muted);
-  margin-top: 2px;
+  margin-top: 0.125rem;
 }
 
 /* OTP 6-box input */
@@ -609,13 +634,13 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   transition: border-color 120ms var(--ease-out);
 }
 
-/* Very narrow viewports (sub-340px phones — old Samsung A1, etc.).
+/* Very narrow viewports (sub-21.25rem ≈ 340px phones — old Samsung A1, etc.).
    Tighten gap and shrink the digit so all 6 boxes still fit neatly. */
-@media (max-width: 340px) {
-  .otp-row { gap: 6px; }
-  .otp-box { font-size: 20px; }
+@media (max-width: 21.25rem) {
+  .otp-row { gap: 0.375rem; }
+  .otp-box { font-size: 1.25rem; }
 }
-.otp-box:focus { border-color: var(--c-primary); box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12); }
+.otp-box:focus { border-color: var(--c-primary); box-shadow: 0 0 0 0.1875rem rgba(13, 148, 136, 0.12); }
 
 /* =========================================================================
    Cards & list items
@@ -641,13 +666,13 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   margin: 0;
 }
 
-.list { display: flex; flex-direction: column; gap: 8px; }
+.list { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .list-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
   background: var(--c-bg-surface);
   border: 1px solid var(--c-line);
   border-radius: var(--r-lg);
@@ -657,8 +682,8 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 .list-item:active { transform: scale(0.995); }
 
 .list-item-icon {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: var(--r-md);
   background: var(--c-primary-soft);
   color: var(--c-primary-dark);
@@ -670,10 +695,10 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 }
 
 .list-item-body { flex: 1; min-width: 0; }
-.list-item-title { font-size: 15px; font-weight: 700; margin: 0; letter-spacing: -0.005em; }
-.list-item-sub { font-size: 13px; color: var(--c-ink-muted); margin: 2px 0 0; }
+.list-item-title { font-size: 0.9375rem; font-weight: 700; margin: 0; letter-spacing: -0.005em; }
+.list-item-sub { font-size: 0.8125rem; color: var(--c-ink-muted); margin: 0.125rem 0 0; }
 .list-item-trail {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--c-ink-muted);
   text-align: right;
   white-space: nowrap;
@@ -686,10 +711,10 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
   border-radius: var(--r-pill);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.01em;
 }
@@ -745,7 +770,7 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   grid-template-columns: repeat(4, 1fr);
   background: var(--c-bg-surface);
   border-top: 1px solid var(--c-line);
-  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
   z-index: 5;
   /* Smooth slide for the auto-hide-on-scroll behavior wired in app.js. */
   transition: transform 220ms var(--ease-out);
@@ -758,7 +783,7 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   transform: translateY(calc(100% + env(safe-area-inset-bottom)));
 }
 
-@media (min-width: 900px) {
+@media (min-width: 56.25rem) {
   .tab-bar {
     position: absolute;   /* anchored to .phone-screen (which is position:relative) */
   }
@@ -768,9 +793,9 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 6px 4px;
-  font-size: 11px;
+  gap: 0.1875rem;
+  padding: 0.375rem 0.25rem;
+  font-size: clamp(0.625rem, 2.6vw, 0.6875rem);
   font-weight: 500;
   color: var(--c-ink-muted);
   transition: color 120ms var(--ease-out);
@@ -778,7 +803,7 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 
 .tab-bar a[aria-current="page"] { color: var(--c-primary-dark); }
 
-.tab-bar a svg { width: 24px; height: 24px; }
+.tab-bar a svg { width: 1.5rem; height: 1.5rem; }
 
 /* =========================================================================
    What's coming — chip filter
@@ -1178,9 +1203,9 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   transition: transform 120ms var(--ease-out);
   z-index: 6;   /* above tab-bar (z-index: 5) just in case both ever co-exist */
 }
-.storefront-cart-fab:active { transform: translateY(1px); }
+.storefront-cart-fab:active { transform: translateY(0.0625rem); }
 
-@media (min-width: 900px) {
+@media (min-width: 56.25rem) {
   .storefront-cart-fab {
     position: absolute;   /* anchored to .phone-screen */
   }
@@ -1256,11 +1281,16 @@ body { background: var(--c-bg-page); min-height: 100vh; }
    Inbox (ORD-01) — status filter strip + order rows
    ========================================================================= */
 
+/* Inbox status tabs.
+   Mobile-first: tabs flex: 1 so all four share the full viewport width and
+   nothing spills off the right edge on small phones. From `--bp-tablet` up,
+   tabs revert to natural width and the strip becomes horizontally
+   scrollable so future status filters can be added without breaking layout. */
 .inbox-tabs {
   display: flex;
-  gap: 4px;
-  padding: 0 16px;
-  margin-top: 4px;
+  gap: 0.25rem;
+  padding-inline: clamp(0.5rem, 4vw, 1rem);
+  margin-top: 0.25rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -1269,23 +1299,37 @@ body { background: var(--c-bg-page); min-height: 100vh; }
 .inbox-tabs::-webkit-scrollbar { display: none; }
 
 .inbox-tab {
+  /* Each tab takes its share of the strip width on phones, capped at a
+     comfortable max so they don't stretch absurdly on tablets. */
+  flex: 1 1 0;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 4px 12px;
-  margin: 0 8px;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem clamp(0.25rem, 2vw, 0.75rem) 0.75rem;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
-  font-size: 14px;
+  border-bottom: 0.125rem solid transparent;
+  font-size: clamp(0.8125rem, 3.4vw, 0.875rem);
   font-weight: 500;
   color: var(--c-ink-muted);
   cursor: pointer;
   white-space: nowrap;
   transition: color 120ms var(--ease-out), border-color 120ms var(--ease-out);
 }
-.inbox-tab:first-child { margin-left: 0; }
-.inbox-tab:last-child  { margin-right: 0; }
+
+@media (min-width: 40rem) {
+  /* Tablets and above — give tabs natural width and let the strip scroll
+     horizontally if more filters are ever added. */
+  .inbox-tab {
+    flex: 0 0 auto;
+    padding-inline: 0.5rem;
+    margin-inline: 0.5rem;
+  }
+  .inbox-tab:first-child { margin-left: 0; }
+  .inbox-tab:last-child  { margin-right: 0; }
+}
 
 .inbox-tab[data-active="true"] {
   color: var(--c-primary-dark);
@@ -1297,13 +1341,13 @@ body { background: var(--c-bg-page); min-height: 100vh; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
   border-radius: 999px;
   background: var(--c-bg-soft);
   color: var(--c-ink-soft);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -1500,14 +1544,14 @@ body { background: var(--c-bg-page); min-height: 100vh; }
    edge-to-edge on a desktop browser. The phone-frame view on >=900px
    ignores this because it constrains the .phone-screen explicitly. */
 .screen-body { width: 100%; max-width: 72rem; margin-inline: auto; }
-@media (min-width: 640px)  { .screen-body { padding: 1.25rem 1.5rem 5rem; } }
-@media (min-width: 1024px) { .screen-body { padding: 1.5rem 2rem 5rem; } }
+@media (min-width: 40rem)   { .screen-body { padding: 1.25rem 1.5rem 5rem; } }   /* ~640px — small tablet up */
+@media (min-width: 64rem)   { .screen-body { padding: 1.5rem 2rem 5rem; } }      /* ~1024px — desktop */
 
 /* On phones every primary CTA is full-width by default; from tablet up,
    buttons sized by their content. Inline `style="flex:1"` on side-by-side
    buttons still wins because of CSS specificity (inline > class). */
 button.btn, .btn { width: 100%; border-radius: 0.75rem; padding: 0.625rem 1rem; font-weight: 600; }
-@media (min-width: 640px) { button.btn, .btn { width: auto; } }
+@media (min-width: 40rem) { button.btn, .btn { width: auto; } }
 
 /* Input + textarea + select primitive — single rule keeps them visually
    consistent across screens. font-size: 16px is also enforced earlier in

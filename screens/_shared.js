@@ -93,8 +93,8 @@ window.UI = {
         ${UI.header({ title, back: '/coming' })}
         <div class="screen-body" style="justify-content:center;align-items:center;text-align:center;padding:48px 24px">
           <div style="width:72px;height:72px;border-radius:20px;background:var(--c-primary-soft);color:var(--c-primary-dark);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:16px">🛠️</div>
-          <h2 class="text-xl mb-2">${title}</h2>
-          <p class="text-muted" style="max-width:280px">${note || "We're still building this one — see the roadmap for an ETA."}</p>
+          <h2 class="text-xl" style="margin:0 0 0.5rem">${title}</h2>
+          <p class="text-muted" style="max-width:17.5rem">${note || "We're still building this one — see the roadmap for an ETA."}</p>
         </div>
       </section>
     `;
@@ -102,7 +102,7 @@ window.UI = {
 
   /** Small labelled row (key-value) used in order detail, etc */
   kv(label, value) {
-    return `<div class="row row-between py-1.5">
+    return `<div class="row row-between" style="padding:0.375rem 0">
               <span class="text-sm text-muted">${label}</span>
               <span class="text-sm text-bold">${value}</span>
             </div>`;
