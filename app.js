@@ -53,20 +53,27 @@ function render() {
 
   setDesktopMeta(screen.title || route.screen);
 
+  // Tab-bar layout: each screen still emits its <nav class="tab-bar"> as the
+  // last child of <section class="screen">. The app shell expects the tab
+  // bar to live OUTSIDE the scrolling .app-surface (#app), as a flex sibling
+  // of #app inside .phone-screen — that way the bar stays put while #app
+  // scrolls. We promote it after every render. Stale tab bars from previous
+  // renders are removed first.
+  const phoneScreen = document.querySelector('.phone-screen');
+  if (phoneScreen) {
+    phoneScreen.querySelectorAll(':scope > .tab-bar').forEach(el => el.remove());
+    const renderedBar = app().querySelector(':scope > section > .tab-bar')
+                     || app().querySelector('.tab-bar');
+    if (renderedBar) phoneScreen.appendChild(renderedBar);
+  }
+
   // Let screens wire event handlers after DOM insertion.
   if (screen.init) screen.init(window.state);
 
-  // Scroll to top on every route change. Belt-and-braces: the app surface
-  // scrolls on desktop (phone-frame view), the document scrolls on mobile,
-  // so reset all three so the merchant always lands at the top of the new
-  // screen regardless of device.
+  // Scroll the (now internal) app surface back to top on every route change.
   const surface = app();
   if (surface) surface.scrollTop = 0;
   if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo(0, 0);
-  if (typeof document !== 'undefined') {
-    if (document.documentElement) document.documentElement.scrollTop = 0;
-    if (document.body) document.body.scrollTop = 0;
-  }
 }
 
 // Simple navigation helper — screens call navigate('inbox') or go('inbox/ord_001')
@@ -80,30 +87,28 @@ window.addEventListener('DOMContentLoaded', render);
 
 /* =========================================================================
    Tab-bar scroll controller — modern mobile-app behaviour.
-   - Hide the bottom .tab-bar when the user is scrolling DOWN past a
-     small threshold (so it's out of the way while reading).
+   - Hide the bottom .tab-bar when the user is scrolling DOWN past a small
+     threshold (so it's out of the way while reading).
    - Show the .tab-bar the moment the user scrolls UP (so it's reachable
-     when they want to navigate).
-   - Always visible at the very top of the page.
-   The listener attaches to whichever scroll container is actually used:
-     • On mobile the document/body scrolls.
-     • On the desktop phone-frame, .app-surface scrolls.
+     when the merchant wants to navigate).
+   - Always visible when the scroll position is at the top.
+   In the new app-shell layout, .app-surface (#app) is the only thing that
+   scrolls. The listener attaches there — body itself doesn't scroll, so
+   window scroll events would never fire.
    ========================================================================= */
 (function setupTabBarController() {
-  const HIDE_THRESHOLD = 12;   // pixels of down-scroll before hiding
-  const TOP_REVEAL     = 24;   // always show when within this many px of the top
+  const HIDE_THRESHOLD = 12;
+  const TOP_REVEAL     = 24;
   let lastY = 0;
   let ticking = false;
 
-  function getScrollY() {
-    // Prefer document scroll (mobile); fall back to .app-surface (desktop).
-    if (typeof window !== 'undefined' && typeof window.scrollY === 'number' && window.scrollY > 0) {
-      return window.scrollY;
-    }
-    const surface = document.getElementById('app');
-    return (surface && surface.scrollTop) || 0;
+  function scrollContainer() {
+    return document.getElementById('app');
   }
-
+  function getScrollY() {
+    const c = scrollContainer();
+    return c ? c.scrollTop : 0;
+  }
   function tabBars() {
     return document.querySelectorAll('.tab-bar');
   }
@@ -114,13 +119,10 @@ window.addEventListener('DOMContentLoaded', render);
     const delta = y - lastY;
 
     if (y < TOP_REVEAL) {
-      // Near the top — always visible.
       tabBars().forEach(el => el.classList.remove('tab-bar--hidden'));
     } else if (delta > HIDE_THRESHOLD) {
-      // Scrolling DOWN — hide.
       tabBars().forEach(el => el.classList.add('tab-bar--hidden'));
     } else if (delta < -HIDE_THRESHOLD) {
-      // Scrolling UP — reveal.
       tabBars().forEach(el => el.classList.remove('tab-bar--hidden'));
     }
 
@@ -133,26 +135,33 @@ window.addEventListener('DOMContentLoaded', render);
     requestAnimationFrame(update);
   }
 
-  // Catch both the document scroll (mobile) AND the in-frame scroll
-  // (desktop phone preview, where .app-surface is the scroll container).
-  window.addEventListener('scroll', onScroll, { passive: true });
-  document.addEventListener('DOMContentLoaded', () => {
-    const surface = document.getElementById('app');
-    if (surface) surface.addEventListener('scroll', onScroll, { passive: true });
-  });
+  // Wire the listener once #app exists.
+  function attach() {
+    const c = scrollContainer();
+    if (c) c.addEventListener('scroll', onScroll, { passive: true });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attach);
+  } else {
+    attach();
+  }
 
-  // After every render() the .tab-bar is a brand-new DOM node; reset its
-  // hidden state so navigating to a new screen always lands with the bar
-  // visible (matches the scroll-to-top behaviour).
-  const _origRender = window.render;
-  // render is declared above with `function render()`, so it's already on
-  // the implicit global. We don't replace it — just observe via a MutationObserver.
+  // Reset the hidden state on every render so a new screen always lands
+  // with the tab bar visible. We watch .phone-screen (where app.js moves
+  // the bar to) AND #app (where screens render their content).
   const observer = new MutationObserver(() => {
     lastY = getScrollY();
     tabBars().forEach(el => el.classList.remove('tab-bar--hidden'));
   });
-  document.addEventListener('DOMContentLoaded', () => {
+  function startObserver() {
+    const phoneScreen = document.querySelector('.phone-screen');
     const appEl = document.getElementById('app');
+    if (phoneScreen) observer.observe(phoneScreen, { childList: true });
     if (appEl) observer.observe(appEl, { childList: true });
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startObserver);
+  } else {
+    startObserver();
+  }
 })();
