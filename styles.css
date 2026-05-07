@@ -125,45 +125,49 @@ a { color: inherit; text-decoration: none; }
    merchant experience. On mobile we go full-bleed.
    ========================================================================= */
 
-/* App-shell architecture.
-   On mobile the body is height-locked to the visible viewport (100dvh, with
-   100vh fallback). Inside, .phone-bezel → .phone-screen is a flex column.
-   .app-surface (the screen renderer target) is flex:1 and SCROLLS internally.
-   .tab-bar is a flex sibling AFTER .app-surface — naturally pinned to the
-   bottom of the visible viewport without using position:fixed. This avoids
-   every quirk that breaks fixed positioning inside transformed/contained
-   ancestors on iOS Safari and Android Chrome. */
-html, body {
-  height: 100%;
-}
+/* Layout strategy.
+   On mobile the document scrolls naturally (no overflow:hidden anywhere
+   on the html/body chain) — this matches every browser's native behaviour
+   including iOS Safari / Android Chrome which have known issues with
+   internal-scroll containers (overflow-y:auto inside flex columns).
+   The tab bar is moved to be a direct child of <body> by app.js after each
+   render so it can use position:fixed without being affected by ancestor
+   `overflow:hidden` (a real iOS WebKit bug — see styles.css history).
+   On desktop ≥56.25rem we render the phone-frame and the tab bar is
+   anchored to .phone-screen with position:absolute instead. */
 body {
   background: var(--c-bg-page);
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .desktop-frame {
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: 1fr;
-  align-items: stretch;
-  justify-items: stretch;
+  align-items: center;
+  justify-items: center;
   padding: 0;
 }
 
 .desktop-meta { display: none; }
 
-.phone { width: 100%; height: 100%; }
+.phone { width: 100%; }
 
 .phone-bezel {
   background: var(--c-bg-surface);
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* NOTE: NO overflow:hidden on mobile — iOS Safari has a long-standing
+     bug where overflow:hidden on an ancestor breaks position:fixed on
+     descendants. The desktop @media block below re-adds overflow:hidden
+     because the phone-frame needs to clip rounded corners; that's also
+     why the tab bar moves to .phone-screen instead of body on desktop. */
 }
 
 .phone-notch,
@@ -174,7 +178,8 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--c-bg-page);
 }
 
@@ -356,18 +361,14 @@ body {
    .screen-body, .screen-footer, and .tab-bar children.
    ========================================================================= */
 
-/* The scrollable middle of the app shell. Each screen renders into this
-   element. When a tab bar is present it's moved out of #app and inserted
-   as a sibling of #app inside .phone-screen, so the bar stays put while
-   #app scrolls. */
+/* On mobile, .app-surface is just a flex column — the document body is
+   the scrollable element. On desktop the @media block above turns this
+   into the internal scroll container so the phone-frame stays static and
+   only the screen content scrolls. */
 .app-surface {
   flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
 }
 
 .screen {
@@ -456,7 +457,11 @@ body {
    last row of content isn't hidden behind it — including iPhones with the
    home-indicator safe area. Modern browser :has() handles this without
    touching every screen's inline style. */
-.screen:has(> .tab-bar) > .screen-body {
+/* When a tab bar is mounted at body level (post-render move by app.js),
+   add enough bottom padding to every .screen-body so the last row of
+   content isn't hidden behind it. Inline padding-bottom on individual
+   screens still wins because of CSS specificity (inline > class). */
+body:has(> .tab-bar) .screen-body {
   padding-bottom: calc(6rem + env(safe-area-inset-bottom));
 }
 
@@ -787,28 +792,36 @@ body {
    ========================================================================= */
 
 .tab-bar {
-  /* The tab bar is a flex child of .phone-screen (moved out of #app by
-     app.js after each render). flex:none keeps it from shrinking; the
-     scrollable .app-surface above takes all remaining space. No
-     position:fixed, no containing-block quirks. */
-  flex: none;
+  /* On mobile, app.js moves the rendered tab bar to be a direct child of
+     <body> after each render. As a body-level position:fixed element it
+     pins reliably to the visible viewport on every browser, including iOS
+     Safari (which has a long-standing bug where position:fixed misbehaves
+     inside an overflow:hidden ancestor — escaping to body avoids that).
+     On desktop ≥56.25rem the @media block below switches this to
+     position:absolute so the bar pins to the phone-frame instead. */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   background: var(--c-bg-surface);
   border-top: 1px solid var(--c-line);
   padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
-  z-index: 5;
-  /* Smooth slide for the auto-hide-on-scroll behavior wired in app.js.
-     transform-origin keeps the slide bottom-anchored. */
-  transition: transform 220ms var(--ease-out), max-height 220ms var(--ease-out);
-  transform-origin: bottom;
+  z-index: 50;
+  /* Smooth slide for the auto-hide-on-scroll behavior wired in app.js. */
+  transition: transform 220ms var(--ease-out);
   will-change: transform;
 }
 
+@media (min-width: 56.25rem) {
+  .tab-bar {
+    position: absolute;   /* anchored to .phone-screen on desktop */
+  }
+}
+
 /* Scroll-controller toggles this class while the user is scrolling DOWN.
-   translateY past 100% (plus safe-area) pushes the bar fully off-screen.
-   We also collapse max-height to 0 so the layout reclaims that space — but
-   only after the slide finishes, so the slide-out is visible first. */
+   translateY past 100% (plus safe-area) pushes the bar fully off-screen. */
 .tab-bar.tab-bar--hidden {
   transform: translateY(calc(100% + env(safe-area-inset-bottom)));
 }
