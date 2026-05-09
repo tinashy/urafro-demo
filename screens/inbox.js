@@ -31,18 +31,28 @@ window.Screens.inbox = {
   title: 'Orders',
   render(state) {
     state.inbox = state.inbox || {};
-    const tab = state.inbox.tab || 'new';
+    const tab    = state.inbox.tab    || 'new';
+    const search = (state.inbox.search || '').trim();
+    const q      = search.toLowerCase();
 
-    // Group orders by status, preserving the order they appear in AppData.orders
-    // (newest at front, courtesy of storefront._place's unshift).
-    const byStatus = {};
-    INBOX_TABS.forEach(t => byStatus[t.key] = []);
-    AppData.orders.forEach(o => { (byStatus[o.status] || (byStatus[o.status] = [])).push(o); });
-
+    // Tab counts use the FULL order set so the chip count reflects "how many
+    // orders fit this status" — not "how many fit this status AND your
+    // current search". Matches inventory's chip-count semantics.
     const counts = {};
-    INBOX_TABS.forEach(t => counts[t.key] = byStatus[t.key].length);
+    INBOX_TABS.forEach(t => counts[t.key] = 0);
+    AppData.orders.forEach(o => {
+      if (counts[o.status] !== undefined) counts[o.status] += 1;
+    });
 
-    const orders = byStatus[tab] || [];
+    // Filter pipeline: status → search.
+    const matchesSearch = (o) => {
+      if (!q) return true;
+      return (o.customerName || '').toLowerCase().includes(q)
+          || (o.code || '').toLowerCase().includes(q);
+    };
+    const filteredAll = AppData.orders
+      .filter(o => o.status === tab)
+      .filter(matchesSearch);
 
     return `
       <section class="screen">
@@ -52,16 +62,32 @@ window.Screens.inbox = {
           <span style="width:40px"></span>
         </header>
 
-        ${renderTabStrip(tab, counts)}
+        <div class="screen-body" style="padding-top:0.75rem;padding-bottom:6rem">
 
-        <div class="screen-body" style="padding-top:12px;padding-bottom:96px">
-          ${orders.length === 0
+          <!-- Search — filters by customer name or order code -->
+          <div class="field" style="margin:0">
+            <div class="field-input" style="display:flex;align-items:center;gap:0.5rem">
+              <span class="text-subtle" style="font-size:1rem">🔎</span>
+              <input id="inboxSearch" type="search" placeholder="Search by customer or order code"
+                     value="${search.replace(/"/g,'&quot;')}"
+                     style="flex:1;border:0;outline:0;background:transparent;font:inherit;color:var(--c-ink)">
+              ${search ? `<button onclick="Screens.inbox._clearSearch()" aria-label="Clear search"
+                                  style="background:none;border:0;cursor:pointer;color:var(--c-ink-muted);font-size:1.125rem;padding:0 0.25rem">×</button>` : ''}
+            </div>
+          </div>
+
+          <!-- Status filter chips — same pattern as the inventory page -->
+          <div class="row row-sm" style="gap:0.5rem;flex-wrap:wrap" id="inboxFilterChips">
+            ${INBOX_TABS.map(t => filterChip(t.key, t.label, counts[t.key], tab)).join('')}
+          </div>
+
+          ${filteredAll.length === 0
             ? UI.empty({
-                title: emptyTitleFor(tab),
-                sub:   emptySubFor(tab),
-                icon:  emptyIconFor(tab),
+                title: q ? 'Nothing matches' : emptyTitleFor(tab),
+                sub:   q ? `No ${tab} orders match "${search}".` : emptySubFor(tab),
+                icon:  q ? '🔎' : emptyIconFor(tab),
               })
-            : `<div class="list">${orders.map(orderRow).join('')}</div>`
+            : `<div class="list">${filteredAll.map(orderRow).join('')}</div>`
           }
         </div>
 
@@ -69,27 +95,45 @@ window.Screens.inbox = {
       </section>
     `;
   },
+  init(state) {
+    // Search input — re-render in place on each keystroke; keep focus + caret.
+    const searchEl = document.getElementById('inboxSearch');
+    if (searchEl) {
+      searchEl.addEventListener('input', () => {
+        state.inbox = state.inbox || {};
+        state.inbox.search = searchEl.value;
+        render();
+        const after = document.getElementById('inboxSearch');
+        if (after) {
+          after.focus();
+          const len = after.value.length;
+          try { after.setSelectionRange(len, len); } catch (e) {}
+        }
+      });
+    }
+
+    // Filter chips
+    const wrap = document.getElementById('inboxFilterChips');
+    if (wrap) {
+      wrap.querySelectorAll('button[data-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.inbox = state.inbox || {};
+          state.inbox.tab = btn.dataset.filter;
+          render();
+        });
+      });
+    }
+  },
 };
 
-/* --------------- tab strip --------------- */
-function renderTabStrip(activeKey, counts) {
+/* --------------- chip helper ---------------
+   Mirrors inventory.js filterChip — same .chip class, same aria-pressed
+   pattern, same count-suffix style. */
+function filterChip(key, label, count, activeKey) {
   return `
-    <div class="inbox-tabs" role="tablist">
-      ${INBOX_TABS.map(t => {
-        const isActive = t.key === activeKey;
-        const count    = counts[t.key] || 0;
-        const isNewWithOrders = t.key === 'new' && count > 0;
-        return `
-          <button class="inbox-tab" role="tab" aria-selected="${isActive}" data-active="${isActive}"
-                  onclick="Screens.inbox._setTab('${t.key}')">
-            <span>${t.label}</span>
-            ${count > 0
-              ? `<span class="inbox-tab-count" data-pulse="${isNewWithOrders}">${count}</span>`
-              : ''}
-          </button>
-        `;
-      }).join('')}
-    </div>
+    <button class="chip" aria-pressed="${activeKey === key}" data-filter="${key}">
+      ${label}<span class="text-subtle" style="margin-left:0.375rem">${count}</span>
+    </button>
   `;
 }
 
