@@ -93,35 +93,74 @@ function renderTabStrip(activeKey, counts) {
   `;
 }
 
-/* --------------- order row --------------- */
+/* --------------- order row ---------------
+   Mobile-first card layout adapted from the design reference:
+     • Top metadata line: ORDER CODE · time-ago (small, muted)
+     • Customer name as the heading (wraps to 2 lines if very long)
+     • Summary: items + price + channel (single line, ellipsis)
+     • Right column: dot-prefixed status pill + total
+   Total uses .nowrap so global overflow-wrap:anywhere can't break "$57".
+*/
 function orderRow(o) {
   const pill   = AppData.helpers.statusPill(o.status);
   const ago    = AppData.helpers.timeAgo(o.placedAt);
   const total  = AppData.helpers.money(o.total);
   const itemCt = o.items.reduce((s, it) => s + it.qty, 0);
-  const summary = o.items.length === 1
-    ? `${o.items[0].qty}× ${o.items[0].name}`
-    : `${itemCt} items · ${o.items[0].name}${o.items.length > 1 ? ' + ' + (o.items.length - 1) + ' more' : ''}`;
+  const itemLabel = `${itemCt} item${itemCt === 1 ? '' : 's'}`;
   const channelTag = o.channel === 'storefront' ? 'Storefront' : 'WhatsApp';
+  const subStatus = subStatusFor(o);
+  // Map our existing pill.cls onto a CSS-variable-driven dot color.
+  const dotColor = {
+    'pill-info':    'var(--c-info)',
+    'pill-primary': 'var(--c-primary)',
+    'pill-success': 'var(--c-success)',
+    'pill-warning': 'var(--c-warning)',
+    'pill-danger':  'var(--c-danger)',
+    'pill-neutral': 'var(--c-ink-muted)',
+  }[pill.cls] || 'var(--c-ink-muted)';
 
   return `
-    <a class="list-item inbox-row" href="#/order/${o.id}" aria-label="Open order ${o.code}">
-      <div class="list-item-icon" style="background:var(--c-primary-soft);color:var(--c-primary-dark);font-weight:700">
+    <a class="inbox-row" href="#/order/${o.id}" aria-label="Open order ${o.code} for ${o.customerName}">
+      <div class="inbox-row-avatar" style="background:var(--c-primary-soft);color:var(--c-primary-dark)">
         ${initials(o.customerName)}
       </div>
-      <div class="list-item-body">
-        <div class="row row-between" style="gap:8px">
-          <p class="list-item-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.customerName}</p>
-          <span class="pill ${pill.cls}" style="flex-shrink:0">${pill.label}</span>
-        </div>
-        <p class="list-item-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${summary}</p>
-        <div class="row row-between" style="margin-top:4px">
-          <span class="text-xs text-subtle">${o.code} · ${channelTag} · ${ago}</span>
-          <span class="text-bold" style="font-size:14px">${total}</span>
-        </div>
+      <div class="inbox-row-body">
+        <p class="inbox-row-meta">
+          <span class="inbox-row-code">${o.code}</span>
+          <span class="inbox-row-meta-dot" aria-hidden="true"></span>
+          <span class="inbox-row-time">${ago}</span>
+        </p>
+        <p class="inbox-row-name">${o.customerName}</p>
+        <p class="inbox-row-summary">
+          ${itemLabel}
+          <span class="inbox-row-summary-sep" aria-hidden="true">·</span>
+          <span class="inbox-row-total">${total}</span>
+          <span class="inbox-row-summary-sep" aria-hidden="true">·</span>
+          ${channelTag}
+        </p>
+      </div>
+      <div class="inbox-row-status">
+        <span class="pill ${pill.cls} inbox-row-pill">
+          <span class="inbox-row-pill-dot" style="background:${dotColor}" aria-hidden="true"></span>
+          ${pill.label}
+        </span>
+        ${subStatus ? `<span class="inbox-row-substatus">${subStatus}</span>` : ''}
       </div>
     </a>
   `;
+}
+
+/* Sub-status hint shown below the status pill — a one-line "what's next"
+   note that mirrors the design reference's "Awaiting fulfillment" /
+   "TRK: ZA…" pattern, but using urafro-relevant copy. */
+function subStatusFor(o) {
+  switch (o.status) {
+    case 'new':       return 'Awaiting confirm';
+    case 'confirmed': return 'Stock deducted';
+    case 'fulfilled': return 'Sent';
+    case 'cancelled': return o.cancelReason ? 'See reason' : '';
+    default:          return '';
+  }
 }
 
 /* --------------- helpers --------------- */
